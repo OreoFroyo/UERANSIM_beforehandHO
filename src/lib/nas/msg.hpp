@@ -201,6 +201,12 @@ struct ConfigurationUpdateComplete : PlainMmMessage
     void onBuild(NasMessageBuilder &b);
 };
 
+struct Handover : PlainMmMessage
+{
+    Handover();
+    void onBuild(NasMessageBuilder &b);
+}
+
 struct DeRegistrationAcceptUeOriginating : PlainMmMessage
 {
     DeRegistrationAcceptUeOriginating();

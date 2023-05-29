@@ -255,6 +255,18 @@ void NotificationResponse::onBuild(NasMessageBuilder &b)
     b.optionalIE(0x50, &pduSessionStatus);
 }
 
+Handover::Handover()
+{
+    epd = EExtendedProtocolDiscriminator::MOBILITY_MANAGEMENT_MESSAGES;
+    sht = ESecurityHeaderType::NOT_PROTECTED;
+    messageType = EMessageType::HANDOVER;
+}
+
+void Handover::onBuild(NasMessage &b)
+{
+    b.optionalIE(0x50,&pduSessionStatus);
+}
+
 PduSessionAuthenticationCommand::PduSessionAuthenticationCommand()
 {
     epd = EExtendedProtocolDiscriminator::SESSION_MANAGEMENT_MESSAGES;
@@ -313,6 +325,7 @@ void PduSessionEstablishmentAccept::onBuild(NasMessageBuilder &b)
     b.optionalIE(0x7B, &extendedProtocolConfigurationOptions);
     b.optionalIE(0x25, &dnn);
 }
+
 
 PduSessionEstablishmentReject::PduSessionEstablishmentReject()
 {

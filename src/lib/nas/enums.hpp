@@ -118,6 +118,7 @@ enum class EMessageType
     PDU_SESSION_RELEASE_COMPLETE = 0b11010100,
 
     FIVEG_SM_STATUS = 0b11010110,
+    HANDOVER = 0b11010111,
 };
 
 enum class EMmCause
