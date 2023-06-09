@@ -34,6 +34,7 @@ extern "C"
     struct ASN_NGAP_OverloadStop;
     struct ASN_NGAP_PDUSessionResourceReleaseCommand;
     struct ASN_NGAP_Paging;
+    struct ASN_NGAP_PathSwitchRequest;
 }
 
 namespace nr::gnb
@@ -61,7 +62,10 @@ class NgapTask : public NtsTask
   public:
     explicit NgapTask(TaskBase *base);
     ~NgapTask() override = default;
-
+    void UeHandover(uint64_t sti);
+    ASN_NGAP_NGAP_PDU* sendPathSwitchRequest(int ueId);
+    NgapUeContext* getUectx(int ueId){return m_ueCtx[ueId];};
+    
   protected:
     void onStart() override;
     void onLoop() override;
@@ -94,9 +98,11 @@ class NgapTask : public NtsTask
     /* Message transport */
     void sendNgapNonUe(int amfId, ASN_NGAP_NGAP_PDU *pdu);
     void sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu);
+    void sendXnapMessage(uint8_t *buffer , unsigned long encoded);
     void handleSctpMessage(int amfId, uint16_t stream, const UniqueBuffer &buffer);
     bool handleSctpStreamId(int amfId, int stream, const ASN_NGAP_NGAP_PDU &pdu);
-
+    void sendNgapUeAssociatedtoGnb(int ueId, ASN_NGAP_NGAP_PDU *pdu);
+    
     /* NAS transport */
     void handleInitialNasTransport(int ueId, const OctetString &nasPdu, int64_t rrcEstablishmentCause,
                                    const std::optional<GutiMobileIdentity> &sTmsi);
@@ -116,7 +122,7 @@ class NgapTask : public NtsTask
     void receiveContextRelease(int amfId, ASN_NGAP_UEContextReleaseCommand *msg);
     void receiveContextModification(int amfId, ASN_NGAP_UEContextModificationRequest *msg);
     void sendContextRelease(int ueId, NgapCause cause);
-
+    
     /* NAS Node Selection */
     NgapAmfContext *selectAmf(int ueId);
     NgapAmfContext *selectNewAmfForReAllocation(int ueId, int initiatedAmfId, int amfSetId);
@@ -124,6 +130,8 @@ class NgapTask : public NtsTask
     /* Radio resource control */
     void handleRadioLinkFailure(int ueId);
     void receivePaging(int amfId, ASN_NGAP_Paging *msg);
+
+    
 };
 
 } // namespace nr::gnb

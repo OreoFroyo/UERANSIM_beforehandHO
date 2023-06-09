@@ -73,6 +73,7 @@ struct NmUeRrcToNas : NtsMessage
         PAGING,
         ACTIVE_CELL_CHANGED,
         RRC_FALLBACK_INDICATION,
+        RRC_CONNECTION_RECONFIGURATION,
     } present;
 
     // NAS_DELIVERY
@@ -97,6 +98,7 @@ struct NmUeNasToRrc : NtsMessage
         UPLINK_NAS_DELIVERY,
         RRC_NOTIFY,
         PERFORM_UAC,
+        MEASUREMENT_REPORT,
     } present;
 
     // UPLINK_NAS_DELIVERY

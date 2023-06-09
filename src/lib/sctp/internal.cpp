@@ -125,6 +125,17 @@ void Accept(int sd)
         ThrowError("SCTP accept failure: ", errno);
 }
 
+int MyAccept(int sd)
+{
+    sockaddr saddr{};
+    socklen_t saddr_size{};
+
+    int clientSd = accept(sd, &saddr, &saddr_size);
+    if (clientSd < 0)
+        ThrowError("SCTP accept failure: ", errno);
+    return clientSd;
+}
+
 void Connect(int sd, const std::string &address, uint16_t port)
 {
     addrinfo hints{};

@@ -40,6 +40,7 @@ class GtpTask : public NtsTask
   public:
     explicit GtpTask(TaskBase *base);
     ~GtpTask() override = default;
+    std::unordered_map<uint64_t, std::unique_ptr<PduSessionResource>>& GetPduSessions(){return this->m_pduSessions;};
 
   protected:
     void onStart() override;
@@ -53,7 +54,7 @@ class GtpTask : public NtsTask
     void handleSessionRelease(int ueId, int psi);
     void handleUeContextDelete(int ueId);
     void handleUplinkData(int ueId, int psi, OctetString &&data);
-
+    
     void updateAmbrForUe(int ueId);
     void updateAmbrForSession(uint64_t pduSession);
 };

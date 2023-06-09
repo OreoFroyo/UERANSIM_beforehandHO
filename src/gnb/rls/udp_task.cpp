@@ -90,6 +90,28 @@ void RlsUdpTask::onQuit()
     delete m_server;
 }
 
+int RlsUdpTask::findRlsPdu(uint64_t sti)
+{
+    // int ueId = ++m_newIdCounter;
+
+    // m_stiToUe[sti] = ueId;
+    // m_ueMap[ueId].address = addr;
+    // m_ueMap[ueId].lastSeen = utils::CurrentTimeMillis();
+
+    // auto w = std::make_unique<NmGnbRlsToRls>(NmGnbRlsToRls::SIGNAL_DETECTED);
+    // w->ueId = ueId;
+    // m_ctlTask->push(std::move(w));
+
+    // rls::RlsHeartBeatAck ack{m_sti};
+    // ack.dbm = 50;
+    // sendRlsPdu(addr, ack);
+    if (!m_stiToUe.count(sti)) {
+        m_logger->info("not found ue");
+    }
+    int ueId = m_stiToUe[sti];
+    return ueId;
+}
+
 void RlsUdpTask::receiveRlsPdu(const InetAddress &addr, std::unique_ptr<rls::RlsMessage> &&msg)
 {
     if (msg->msgType == rls::EMessageType::HEARTBEAT)
@@ -106,6 +128,7 @@ void RlsUdpTask::receiveRlsPdu(const InetAddress &addr, std::unique_ptr<rls::Rls
             int ueId = m_stiToUe[msg->sti];
             m_ueMap[ueId].address = addr;
             m_ueMap[ueId].lastSeen = utils::CurrentTimeMillis();
+            m_ueMap[ueId].sti = msg->sti;
         }
         else
         {
@@ -113,6 +136,7 @@ void RlsUdpTask::receiveRlsPdu(const InetAddress &addr, std::unique_ptr<rls::Rls
 
             m_stiToUe[msg->sti] = ueId;
             m_ueMap[ueId].address = addr;
+            m_ueMap[ueId].sti = msg->sti;
             m_ueMap[ueId].lastSeen = utils::CurrentTimeMillis();
 
             auto w = std::make_unique<NmGnbRlsToRls>(NmGnbRlsToRls::SIGNAL_DETECTED);
@@ -179,6 +203,12 @@ void RlsUdpTask::initialize(NtsTask *ctlTask)
 {
     m_ctlTask = ctlTask;
 }
+
+uint64_t RlsUdpTask::findUeSti(int ueId){
+    m_logger->info("address:%s",m_ueMap[ueId].address.getSockAddr()->sa_data);
+    return m_ueMap[ueId].sti;
+}
+
 
 void RlsUdpTask::send(int ueId, const rls::RlsMessage &msg)
 {

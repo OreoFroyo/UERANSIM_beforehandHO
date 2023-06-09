@@ -40,6 +40,7 @@ extern "C"
     struct ASN_RRC_Paging;
     struct ASN_RRC_MIB;
     struct ASN_RRC_SIB1;
+    struct ASN_RRC_RRCReconfiguration;
 }
 
 namespace nr::ue
@@ -122,6 +123,7 @@ class UeRrcTask : public NtsTask
 
     /* NAS Transport */
     void deliverUplinkNas(uint32_t pduId, OctetString &&nasPdu);
+    void deliverMeasurementPeport(uint32_t pduId, OctetString &&nasPdu);
     void receiveDownlinkInformationTransfer(const ASN_RRC_DLInformationTransfer &msg);
 
     /* Connection Control */
@@ -130,6 +132,7 @@ class UeRrcTask : public NtsTask
     void receiveRrcSetup(int cellId, const ASN_RRC_RRCSetup &msg);
     void receiveRrcReject(int cellId, const ASN_RRC_RRCReject &msg);
     void receiveRrcRelease(const ASN_RRC_RRCRelease &msg);
+    void receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg);
 
     /* Failures */
     void declareRadioLinkFailure(rls::ERlfCause cause);

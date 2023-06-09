@@ -129,6 +129,16 @@ void NgapTask::sendNgapNonUe(int associatedAmf, ASN_NGAP_NGAP_PDU *pdu)
     asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
 }
 
+void NgapTask::sendXnapMessage(uint8_t *buffer , unsigned long encoded)
+{
+    auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
+        msg->clientId = 10;
+        msg->stream = 1;
+        msg->buffer = UniqueBuffer{buffer, static_cast<size_t>(encoded)};
+        m_base->sctpTask->push(std::move(msg));
+}
+
+
 void NgapTask::sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu)
 {
     /* Find UE and AMF contexts */
@@ -220,8 +230,102 @@ void NgapTask::sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu)
     asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
 }
 
+void NgapTask::sendNgapUeAssociatedtoGnb(int ueId, ASN_NGAP_NGAP_PDU *pdu)
+{
+    /* Find UE and AMF contexts */
+
+    auto *ue = findUeContext(ueId);
+    if (ue == nullptr)
+    {
+        asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
+        return;
+    }
+
+    auto *amf = findAmfContext(ue->associatedAmfId);
+    if (amf == nullptr)
+    {
+        asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
+        return;
+    }
+
+    /* Insert UE-related information elements */
+    {
+        if (ue->amfUeNgapId > 0)
+        {
+            asn::ngap::AddProtocolIeIfUsable(
+                *pdu, asn_DEF_ASN_NGAP_AMF_UE_NGAP_ID, ASN_NGAP_ProtocolIE_ID_id_AMF_UE_NGAP_ID,
+                FindCriticalityOfUserIe(pdu, ASN_NGAP_ProtocolIE_ID_id_AMF_UE_NGAP_ID), [ue](void *mem) {
+                    auto &id = *reinterpret_cast<ASN_NGAP_AMF_UE_NGAP_ID_t *>(mem);
+                    asn::SetSigned64(ue->amfUeNgapId, id);
+                });
+        }
+
+        asn::ngap::AddProtocolIeIfUsable(
+            *pdu, asn_DEF_ASN_NGAP_RAN_UE_NGAP_ID, ASN_NGAP_ProtocolIE_ID_id_RAN_UE_NGAP_ID,
+            FindCriticalityOfUserIe(pdu, ASN_NGAP_ProtocolIE_ID_id_RAN_UE_NGAP_ID),
+            [ue](void *mem) { *reinterpret_cast<ASN_NGAP_RAN_UE_NGAP_ID_t *>(mem) = ue->ranUeNgapId; });
+
+        asn::ngap::AddProtocolIeIfUsable(
+            *pdu, asn_DEF_ASN_NGAP_UserLocationInformation, ASN_NGAP_ProtocolIE_ID_id_UserLocationInformation,
+            FindCriticalityOfUserIe(pdu, ASN_NGAP_ProtocolIE_ID_id_UserLocationInformation), [this](void *mem) {
+                auto *loc = reinterpret_cast<ASN_NGAP_UserLocationInformation *>(mem);
+                loc->present = ASN_NGAP_UserLocationInformation_PR_userLocationInformationNR;
+                loc->choice.userLocationInformationNR = asn::New<ASN_NGAP_UserLocationInformationNR>();
+
+                auto &nr = loc->choice.userLocationInformationNR;
+                nr->timeStamp = asn::New<ASN_NGAP_TimeStamp_t>();
+
+                ngap_utils::ToPlmnAsn_Ref(m_base->config->plmn, nr->nR_CGI.pLMNIdentity);
+                asn::SetBitStringLong<36>(m_base->config->nci, nr->nR_CGI.nRCellIdentity);
+                ngap_utils::ToPlmnAsn_Ref(m_base->config->plmn, nr->tAI.pLMNIdentity);
+                asn::SetOctetString3(nr->tAI.tAC, octet3{m_base->config->tac});
+                asn::SetOctetString4(*nr->timeStamp, octet4{utils::CurrentTimeStamp().seconds32()});
+            });
+    }
+
+    /* Encode and send the PDU */
+
+    char errorBuffer[1024];
+    size_t len;
+
+    if (asn_check_constraints(&asn_DEF_ASN_NGAP_NGAP_PDU, pdu, errorBuffer, &len) != 0)
+    {
+        m_logger->err("NGAP PDU ASN constraint validation failed");
+        asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
+        return;
+    }
+
+    ssize_t encoded;
+    uint8_t *buffer;
+    if (!ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer))
+        m_logger->err("NGAP APER encoding failed");
+    else
+    {
+        auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
+        msg->clientId = 1; // todo: 改id
+        msg->stream = ue->uplinkStream;
+        msg->buffer = UniqueBuffer{buffer, static_cast<size_t>(encoded)};
+        m_base->sctpTask->push(std::move(msg));
+
+        if (m_base->nodeListener)
+        {
+            std::string xer = ngap_encode::EncodeXer(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
+            if (xer.length() > 0)
+            {
+                m_base->nodeListener->onSend(app::NodeType::GNB, m_base->config->name, app::NodeType::AMF, amf->amfName,
+                                             app::ConnectionType::NGAP, xer);
+            }
+        }
+    }
+
+    asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
+}
+
+
+
 void NgapTask::handleSctpMessage(int amfId, uint16_t stream, const UniqueBuffer &buffer)
 {
+
     auto *amf = findAmfContext(amfId);
     if (amf == nullptr)
         return;
@@ -291,6 +395,9 @@ void NgapTask::handleSctpMessage(int amfId, uint16_t stream, const UniqueBuffer 
             break;
         case ASN_NGAP_InitiatingMessage__value_PR_Paging:
             receivePaging(amf->ctxId, &value.choice.Paging);
+            break;
+        case ASN_NGAP_InitiatingMessage__value_PR_HandoverRequest:
+            //receiveHandoverRequest();
             break;
         default:
             m_logger->err("Unhandled NGAP initiating-message received (%d)", value.present);
@@ -403,5 +510,7 @@ bool NgapTask::handleSctpStreamId(int amfId, int stream, const ASN_NGAP_NGAP_PDU
 
     return true;
 }
+
+
 
 } // namespace nr::gnb

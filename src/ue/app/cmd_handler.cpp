@@ -267,6 +267,15 @@ void UeCmdHandler::handleCmdImpl(NmUeCliCommand &msg)
         sendResult(msg.address, json.dumpYaml());
         break;
     }
+    case app::UeCliCommand::HANDOVER: {
+        Json json = Json::Obj({});
+        json = "successful hahaha";
+
+        m_base->nasTask->mm->handoverEvent();
+
+        sendResult(msg.address, json.dumpYaml());
+        break;
+    }
     }
 }
 

@@ -69,6 +69,11 @@ void GnbRrcTask::onLoop()
         case NmGnbNgapToRrc::PAGING:
             handlePaging(w.uePagingTmsi, w.taiListForPaging);
             break;
+        
+        case NmGnbNgapToRrc::EXCHANGE_RRC: {
+            exchangeRRCConnection(w.ueId);
+            break;
+        }
         }
         break;
     }
@@ -85,6 +90,7 @@ void GnbRrcTask::onLoop()
         m_logger->unhandledNts(*msg);
         break;
     }
+
 }
 
 } // namespace nr::gnb

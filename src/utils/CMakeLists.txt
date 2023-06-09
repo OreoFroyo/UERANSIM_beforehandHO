@@ -1,5 +1,5 @@
-file(GLOB_RECURSE HDR_FILES *.hpp)
-file(GLOB_RECURSE SRC_FILES *.cpp)
+file(GLOB_RECURSE HDR_FILES *.hpp *.h)
+file(GLOB_RECURSE SRC_FILES *.cpp *.c)
 
 add_library(utils ${HDR_FILES} ${SRC_FILES})
 

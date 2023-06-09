@@ -154,6 +154,18 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
         }
         break;
     }
+    case app::GnbCliCommand::XNAP_CONNECTION: {
+        auto msg1 = std::make_unique<NmGnbSctp>(NmGnbSctp::GNB_CONNECTION_REQUEST);
+        msg1->clientId = 10;//amfCtx.second->ctxId; 
+        msg1->localAddress = m_base->config->ngapIp;
+        msg1->localPort = 0;
+        msg1->remoteAddress = msg.cmd->gnbIp;
+        msg1->remotePort = std::atoi(msg.cmd->port.c_str());
+        msg1->ppid = sctp::PayloadProtocolId::NGAP;
+        msg1->associatedTask = m_base->ngapTask; 
+        m_base->sctpTask->push(std::move(msg1));
+        sendResult(msg.address,"XnAP Connection Setup Successfully");
+    }
     }
 }
 

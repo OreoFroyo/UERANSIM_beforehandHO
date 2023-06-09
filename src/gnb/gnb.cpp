@@ -13,7 +13,8 @@
 #include "rls/task.hpp"
 #include "rrc/task.hpp"
 #include "sctp/task.hpp"
-
+#include "sctp/server.hpp"
+#include <lib/sctp/server.hpp>
 #include <lib/app/cli_base.hpp>
 
 namespace nr::gnb
@@ -33,6 +34,8 @@ GNodeB::GNodeB(GnbConfig *config, app::INodeListener *nodeListener, NtsTask *cli
     base->rrcTask = new GnbRrcTask(base);
     base->gtpTask = new GtpTask(base);
     base->rlsTask = new GnbRlsTask(base);
+    
+    base->sctpServer = new GnbSctpServer(base,config->ngapIp,1478);
 
     taskBase = base;
 }
@@ -66,6 +69,7 @@ void GNodeB::start()
     taskBase->rrcTask->start();
     taskBase->rlsTask->start();
     taskBase->gtpTask->start();
+    taskBase->sctpServer->start();
 }
 
 void GNodeB::pushCommand(std::unique_ptr<app::GnbCliCommand> cmd, const InetAddress &address)

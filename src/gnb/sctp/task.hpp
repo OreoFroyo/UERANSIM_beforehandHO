@@ -12,13 +12,13 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-
+#include <utils/cJSON.h>
 #include <gnb/nts.hpp>
 #include <lib/sctp/sctp.hpp>
 #include <utils/logger.hpp>
 #include <utils/nts.hpp>
 #include <utils/scoped_thread.hpp>
-
+//#include "server.hpp"
 namespace nr::gnb
 {
 
@@ -61,6 +61,10 @@ class SctpTask : public NtsTask
     void receiveAssociationShutdown(int clientId);
     void receiveClientReceive(int clientId, uint16_t stream, UniqueBuffer &&buffer);
     void receiveUnhandledNotification(int clientId);
+    void receiveHandover(int clientId);
+    void receiveGnbSctpConnectionSetupRequest(int clientId, const std::string &localAddress, uint16_t localPort,
+                                           const std::string &remoteAddress, uint16_t remotePort,
+                                           sctp::PayloadProtocolId ppid);
     void receiveConnectionClose(int clientId);
     void receiveSendMessage(int clientId, uint16_t stream, UniqueBuffer &&buffer);
 };

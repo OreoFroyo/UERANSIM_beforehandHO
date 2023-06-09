@@ -102,8 +102,8 @@ class OptionsResult
     OptionsDescription m_description;
 
   public:
-    OptionsResult(int argc, char **argv, const OptionsDescription &desc, bool freeArgv, IOptionsHandler *handler);
     OptionsResult(const std::vector<std::string> &args, const OptionsDescription &desc, IOptionsHandler *handler);
+    OptionsResult(int argc, char **argv, const OptionsDescription &desc, bool freeArgv, IOptionsHandler *handler);
 
   public:
     bool hasFlag(const OptionItem &item) const;

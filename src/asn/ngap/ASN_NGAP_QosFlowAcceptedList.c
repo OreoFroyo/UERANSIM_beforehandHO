@@ -32,7 +32,7 @@ asn_SET_OF_specifics_t asn_SPC_ASN_NGAP_QosFlowAcceptedList_specs_1 = {
 	offsetof(struct ASN_NGAP_QosFlowAcceptedList, _asn_ctx),
 	0,	/* XER encoding is XMLDelimitedItemList */
 };
-asn_TYPE_descriptor_t asn_DEF_ASN_NGAP_QosFlowAcceptedList = {
+asn_TYPE_descriptor_t  asn_DEF_ASN_NGAP_QosFlowAcceptedList = {
 	"QosFlowAcceptedList",
 	"QosFlowAcceptedList",
 	&asn_OP_SEQUENCE_OF,

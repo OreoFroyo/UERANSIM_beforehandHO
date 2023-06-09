@@ -11,7 +11,7 @@
 #include <optional>
 #include <sstream>
 #include <utility>
-
+#include <iostream>
 #include <utils/common.hpp>
 #include <utils/constants.hpp>
 #include <utils/options.hpp>
@@ -141,6 +141,18 @@ static opt::OptionsDescription DescForPsEstablish(const std::string &subCommand,
     return res;
 }
 
+static opt::OptionsDescription DescForXnapSetup(const std::string &subCommand, const CmdEntry &entry)
+{
+    auto res = opt::OptionsDescription{
+        {},  {}, entry.descriptionText, {}, subCommand, {entry.usageText}, {}, entry.helpIfEmpty,
+        true};
+    
+    res.items.emplace_back(std::nullopt, "ip", "tell me ip!!!", "value");
+    res.items.emplace_back(std::nullopt, "port", "tell me port!!!", "value");
+
+    return res;
+}
+
 namespace app
 {
 
@@ -152,6 +164,7 @@ static OrderedMap<std::string, CmdEntry> g_gnbCmdEntries = {
     {"ue-list", {"List all UEs associated with the gNB", "", DefaultDesc, false}},
     {"ue-count", {"Print the total number of UEs connected the this gNB", "", DefaultDesc, false}},
     {"ue-release", {"Request a UE context release for the given UE", "<ue-id>", DefaultDesc, false}},
+    {"xnap-setup", {"setup a xnap connection between gnbs", "" ,DescForXnapSetup, true}},
 };
 
 static OrderedMap<std::string, CmdEntry> g_ueCmdEntries = {
@@ -167,6 +180,7 @@ static OrderedMap<std::string, CmdEntry> g_ueCmdEntries = {
     {"ps-release-all", {"Trigger PDU session release procedures for all active sessions", "", DefaultDesc, false}},
     {"deregister",
      {"Perform a de-registration by the UE", "<normal|disable-5g|switch-off|remove-sim>", DefaultDesc, true}},
+    {"handover", {"handover gogogo", "", DefaultDesc, false}},
 };
 
 static std::unique_ptr<GnbCliCommand> GnbCliParseImpl(const std::string &subCmd, const opt::OptionsResult &options,
@@ -215,6 +229,14 @@ static std::unique_ptr<GnbCliCommand> GnbCliParseImpl(const std::string &subCmd,
         if (cmd->ueId <= 0)
             CMD_ERR("Invalid UE ID")
         return cmd;
+    }
+    else if (subCmd == "xnap-setup")
+    {
+        auto cmd = std::make_unique<GnbCliCommand>(GnbCliCommand::XNAP_CONNECTION);
+        cmd->gnbIp = options.getOption(std::nullopt,"ip");
+        cmd->port = options.getOption(std::nullopt,"port");
+        return cmd;
+        
     }
 
     return nullptr;
@@ -331,6 +353,11 @@ static std::unique_ptr<UeCliCommand> UeCliParseImpl(const std::string &subCmd, c
     {
         return std::make_unique<UeCliCommand>(UeCliCommand::COVERAGE);
     }
+    else if (subCmd == "handover")
+    {
+        return std::make_unique<UeCliCommand>(UeCliCommand::HANDOVER);
+    }
+    
 
     return nullptr;
 }

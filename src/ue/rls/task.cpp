@@ -111,6 +111,7 @@ void UeRlsTask::onLoop()
             m_shCtx->sti = Random::Mixed(m_base->config->getNodeName()).nextL();
             break;
         }
+
         }
         break;
     }

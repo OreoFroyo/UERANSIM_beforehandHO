@@ -205,8 +205,9 @@ void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
 
         auto ul = std::make_unique<gtp::UlPduSessionInformation>();
         // TODO: currently using first QSI
+        m_logger->info("before qos flow");
         ul->qfi = static_cast<int>(pduSession->qosFlows->list.array[0]->qosFlowIdentifier);
-
+        m_logger->info("after qos flow");
         auto cont = std::make_unique<gtp::PduSessionContainerExtHeader>();
         cont->pduSessionInformation = std::move(ul);
         gtp.extHeaders.push_back(std::move(cont));
@@ -215,7 +216,14 @@ void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
         if (!gtp::EncodeGtpMessage(gtp, gtpPdu))
             m_logger->err("Uplink data failure, GTP encoding failed");
         else
+        {
+            auto address = pduSession->upTunnel.address.data() ;
+            for (int i=0;i < pduSession->upTunnel.address.length();i++){
+                m_logger->info("address: %d",*(address+i));
+            }
             m_udpServer->send(InetAddress(pduSession->upTunnel.address, cons::GtpPort), gtpPdu);
+        
+        }
     }
 }
 

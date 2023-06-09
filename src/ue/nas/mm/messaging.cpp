@@ -191,8 +191,13 @@ EProcRc NasMm::sendNasMessage(const nas::PlainMmMessage &msg)
             nas::EncodeNasMessage(msg, pdu);
         }
     }
-
-    auto m = std::make_unique<NmUeNasToRrc>(NmUeNasToRrc::UPLINK_NAS_DELIVERY);
+    std::unique_ptr<nr::ue::NmUeNasToRrc> m;
+    if(msg.messageType == nas::EMessageType::HANDOVER){
+        m = std::make_unique<NmUeNasToRrc>(NmUeNasToRrc::MEASUREMENT_REPORT);
+    }
+    else{
+        m = std::make_unique<NmUeNasToRrc>(NmUeNasToRrc::UPLINK_NAS_DELIVERY);
+    }
     m->pduId = 0;
     m->nasPdu = std::move(pdu);
     m_base->rrcTask->push(std::move(m));

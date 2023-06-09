@@ -20,7 +20,7 @@
 int (*real_socket)(int, int, int);
 int (*real_setsockopt)(int, int, int, const void *, socklen_t);
 int (*real_bind)(int, const struct sockaddr *, socklen_t);
-int (*real_connect)(int, const struct sockaddr *, socklen_t);
+int (* real_connect)(int, const struct sockaddr *, socklen_t);
 
 char *bind_addr_env;
 unsigned long int bind_addr_saddr;

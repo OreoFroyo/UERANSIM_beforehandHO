@@ -116,12 +116,12 @@ void NasMm::performPlmnSelection()
 
 void NasMm::handleActiveCellChange(const Tai &prevTai)
 {
-    if (m_cmState == ECmState::CM_CONNECTED)
-    {
-        // TODO
-        m_logger->err("Serving cell change in CM-CONNECTED");
-        return;
-    }
+    // if (m_cmState == ECmState::CM_CONNECTED)
+    // {
+    //     // TODO
+    //     m_logger->err("Serving cell change in CM-CONNECTED");
+    //     return;
+    // }
 
     auto currentCell = m_base->shCtx.currentCell.get();
     Tai currentTai = Tai{currentCell.plmn, currentCell.tac};

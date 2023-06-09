@@ -262,9 +262,9 @@ Handover::Handover()
     messageType = EMessageType::HANDOVER;
 }
 
-void Handover::onBuild(NasMessage &b)
+void Handover::onBuild(NasMessageBuilder &b)
 {
-    b.optionalIE(0x50,&pduSessionStatus);
+    b.optionalIE(0x78, &eapMessage);
 }
 
 PduSessionAuthenticationCommand::PduSessionAuthenticationCommand()

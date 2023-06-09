@@ -35,6 +35,10 @@
 #include <asn/rrc/ASN_RRC_UL-DCCH-Message.h>
 #include <asn/rrc/ASN_RRC_ULInformationTransfer-IEs.h>
 #include <asn/rrc/ASN_RRC_ULInformationTransfer.h>
+#include <asn/rrc/ASN_RRC_MeasurementReport.h>
+#include <asn/rrc/ASN_RRC_MeasurementReport-IEs.h>
+#include <asn/rrc/ASN_RRC_RRCReconfiguration.h>
+#include <asn/rrc/ASN_RRC_RRCReconfiguration-IEs.h>
 
 namespace nr::gnb
 {
@@ -94,15 +98,44 @@ void GnbRrcTask::releaseConnection(int ueId)
     m_ueCtx.erase(ueId);
 }
 
+void GnbRrcTask::exchangeRRCConnection(int ueId)
+{
+    m_logger->info("Exchange RRC connection by use reconfigure for UE[%d]", ueId);
+
+    // Send RRC Release message
+    auto *pdu = asn::New<ASN_RRC_DL_DCCH_Message>();
+    pdu->message.present = ASN_RRC_DL_DCCH_MessageType_PR_c1;
+    pdu->message.choice.c1 = asn::NewFor(pdu->message.choice.c1);
+    pdu->message.choice.c1->present = ASN_RRC_DL_DCCH_MessageType__c1_PR_rrcReconfiguration;
+    auto &rrcReconfiguration = pdu->message.choice.c1->choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration>();
+    rrcReconfiguration->rrc_TransactionIdentifier = getNextTid();
+    rrcReconfiguration->criticalExtensions.present = ASN_RRC_RRCReconfiguration__criticalExtensions_PR_rrcReconfiguration;
+    rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
+    
+    sendRrcMessage(ueId, pdu);
+    asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);
+
+}
+
 void GnbRrcTask::handleRadioLinkFailure(int ueId)
 {
     // Notify NGAP task
     auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::RADIO_LINK_FAILURE);
     w->ueId = ueId;
     m_base->ngapTask->push(std::move(w));
-
+  
     // Delete UE RRC context
     m_ueCtx.erase(ueId);
+}
+
+void GnbRrcTask::receiveMeasurementReport(int ueId , const ASN_RRC_MeasurementReport &msg)
+{
+    auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::HANDOVER_REQUEST);
+        w->ueId = ueId;
+        // OctetString nasPdu = asn::GetOctetString(*msg.criticalExtensions.choice.measurementReport->measResults);
+        // w->pdu = std::move(nasPdu);
+        m_logger->info("RRC receive measurement report");
+        m_base->ngapTask->push(std::move(w));
 }
 
 void GnbRrcTask::handlePaging(const asn::Unique<ASN_NGAP_FiveG_S_TMSI> &tmsi,

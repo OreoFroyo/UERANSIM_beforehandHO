@@ -10,10 +10,11 @@
 
 #include <gnb/rls/task.hpp>
 #include <lib/rrc/encode.hpp>
-
+#include <iostream>
 #include <asn/rrc/ASN_RRC_UL-CCCH-Message.h>
 #include <asn/rrc/ASN_RRC_UL-DCCH-Message.h>
-
+#include <asn/rrc/ASN_RRC_MeasurementReport-IEs.h>
+#include <asn/rrc/ASN_RRC_MeasurementReport.h>
 namespace nr::gnb
 {
 
@@ -54,6 +55,9 @@ void GnbRrcTask::handleUplinkRrc(int ueId, rrc::RrcChannel channel, const OctetS
             m_logger->err("RRC UL-DCCH PDU decoding failed.");
         else
             receiveRrcMessage(ueId, pdu);
+            //m_logger->info("pdu->message.choice.c1: %d",pdu->message.choice.c1->present);
+            // std::cout<<"------------------rrc-channel--------------------"<<std::endl;
+            // std::cout<<"pdu->message.choice.c1:"<<pdu->message.choice.c1->present<<std::endl;
         asn::Free(asn_DEF_ASN_RRC_UL_DCCH_Message, pdu);
         break;
     }
@@ -179,6 +183,7 @@ void GnbRrcTask::receiveRrcMessage(int ueId, ASN_RRC_UL_CCCH1_Message *msg)
 
 void GnbRrcTask::receiveRrcMessage(int ueId, ASN_RRC_UL_DCCH_Message *msg)
 {
+
     if (msg->message.present != ASN_RRC_UL_DCCH_MessageType_PR_c1)
         return;
 
@@ -188,8 +193,11 @@ void GnbRrcTask::receiveRrcMessage(int ueId, ASN_RRC_UL_DCCH_Message *msg)
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_NOTHING:
         return;
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_measurementReport:
+        //触发XnAP
+        receiveMeasurementReport(ueId, *c1->choice.measurementReport);
         break; // TODO
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_rrcReconfigurationComplete:
+        receiveRrcReconfigurationComplete(ueId, *c1->choice.rrcReconfigurationComplete);
         break; // TODO
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_rrcSetupComplete:
         receiveRrcSetupComplete(ueId, *c1->choice.rrcSetupComplete);
@@ -199,7 +207,7 @@ void GnbRrcTask::receiveRrcMessage(int ueId, ASN_RRC_UL_DCCH_Message *msg)
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_rrcResumeComplete:
         break; // TODO
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_securityModeComplete:
-        break; // TODO
+        break; // TODOs
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_securityModeFailure:
         break; // TODO
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_ulInformationTransfer:
@@ -222,6 +230,8 @@ void GnbRrcTask::receiveRrcMessage(int ueId, ASN_RRC_UL_DCCH_Message *msg)
     case ASN_RRC_UL_DCCH_MessageType__c1_PR_scgFailureInformationEUTRA:
         break; // TODO
     }
+    
+    
 }
 
 } // namespace nr::gnb

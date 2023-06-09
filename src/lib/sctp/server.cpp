@@ -9,8 +9,9 @@
 #include "server.hpp"
 #include "internal.hpp"
 
-sctp::SctpServer::SctpServer(const std::string &address, uint16_t port) : sd(0)
+sctp::SctpServer::SctpServer(const std::string &address, uint16_t port,sctp::ISctpHandler* newhandler) : sd(0)
 {
+    handler = newhandler;
     try
     {
         sd = CreateSocket();
@@ -26,6 +27,15 @@ sctp::SctpServer::SctpServer(const std::string &address, uint16_t port) : sd(0)
     }
 }
 
+
+
+void sctp::SctpServer::loop()
+{
+    // sctp::ISctpHandler *handler = new nr::gnb::mySctpHandler(nullptr,10);
+    ReceiveMessage(clientsd,60,this->handler);
+
+}
+
 sctp::SctpServer::~SctpServer()
 {
     CloseSocket(sd);
@@ -33,5 +43,13 @@ sctp::SctpServer::~SctpServer()
 
 void sctp::SctpServer::start()
 {
-    Accept(sd);
+    printf("---------------start--------------\n");
+    thread = std::thread{[this]() {
+            printf("thread\n");
+            clientsd = MyAccept(sd);
+            while (true)
+            {
+                 this->loop();
+            }
+        }};
 }

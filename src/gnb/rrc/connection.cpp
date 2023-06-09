@@ -35,6 +35,7 @@
 #include <asn/rrc/ASN_RRC_UL-DCCH-Message.h>
 #include <asn/rrc/ASN_RRC_ULInformationTransfer-IEs.h>
 #include <asn/rrc/ASN_RRC_ULInformationTransfer.h>
+#include <gnb/sctp/server.hpp>
 
 namespace nr::gnb
 {
@@ -130,6 +131,16 @@ void GnbRrcTask::receiveRrcSetupComplete(int ueId, const ASN_RRC_RRCSetupComplet
     w->sTmsi = ue->sTmsi;
 
     m_base->ngapTask->push(std::move(w));
+}
+
+void GnbRrcTask::receiveRrcReconfigurationComplete(int ueId, const ASN_RRC_RRCReconfigurationComplete &msg)
+{
+    m_logger->info("Receive RRC ReconfigurationComplete");
+    
+    auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_PATHSWITCH);
+    w->ueId = ueId;
+    m_base->ngapTask->push(std::move(w));
+    //sendNgapUeAssociated(ueId, pdu);
 }
 
 } // namespace nr::gnb

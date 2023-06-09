@@ -7,11 +7,10 @@
 //
 
 #include "task.hpp"
-
 #include <cstring>
 #include <thread>
 #include <utility>
-
+#include "server.hpp"
 // #define MOCKED_PACKETS
 
 #ifdef MOCKED_PACKETS
@@ -97,6 +96,43 @@ class SctpHandler : public sctp::ISctpHandler
     }
 };
 
+// class mySctpHandler : public sctp::ISctpHandler
+// {
+//     private:
+//         int clientId;
+
+//     public:
+//         mySctpHandler(int clientId) : clientId(clientId){}
+    
+//     private:
+//         void onAssociationSetup(int associationId, int inStreams, int outStreams) override
+//     {
+       
+//     }
+
+//     void onAssociationShutdown() override
+//     {
+        
+//     }
+//     void onMessage(const uint8_t *buffer, size_t length, uint16_t stream) override
+//     {
+//         printf("printf success:");
+//         printf("%s",buffer);
+//     }
+
+//     void onUnhandledNotification() override
+//     {
+        
+//     }
+
+//     void onConnectionReset() override
+//     {
+        
+//     }
+    
+// };
+
+
 [[noreturn]] static void ReceiverThread(std::pair<sctp::SctpClient *, sctp::ISctpHandler *> *args)
 {
     sctp::SctpClient *client = args->first;
@@ -152,6 +188,11 @@ void SctpTask::onLoop()
         }
         case NmGnbSctp::SEND_MESSAGE: {
             receiveSendMessage(w.clientId, w.stream, std::move(w.buffer));
+            break;
+        }
+        case NmGnbSctp::GNB_CONNECTION_REQUEST: {
+            receiveGnbSctpConnectionSetupRequest(w.clientId, w.localAddress, w.localPort, w.remoteAddress,
+                                              w.remotePort, w.ppid);
             break;
         }
         case NmGnbSctp::UNHANDLED_NOTIFICATION: {
@@ -235,6 +276,51 @@ void SctpTask::receiveSctpConnectionSetupRequest(int clientId, const std::string
         new std::pair<sctp::SctpClient *, sctp::ISctpHandler *>(client, handler));
 }
 
+void SctpTask::receiveGnbSctpConnectionSetupRequest(int clientId, const std::string &localAddress, uint16_t localPort,
+                                                 const std::string &remoteAddress, uint16_t remotePort,
+                                                 sctp::PayloadProtocolId ppid)
+{
+    m_logger->info("Trying to establish SCTP connection... (%s:%d)", remoteAddress.c_str(), remotePort);
+
+    auto *client = new sctp::SctpClient(ppid);
+
+    try
+    {
+        client->bind(localAddress, localPort);
+    }
+    catch (const sctp::SctpError &exc)
+    {
+        m_logger->err("Binding to %s:%d failed. %s", localAddress.c_str(), localPort, exc.what());
+        delete client;
+        return;
+    }
+
+    try
+    {
+        client->connect(remoteAddress, remotePort);
+    }
+    catch (const sctp::SctpError &exc)
+    {
+        m_logger->err("Connecting to %s:%d failed. %s", remoteAddress.c_str(), remotePort, exc.what());
+        delete client;
+        return;
+    }
+
+    m_logger->info("SCTP connection established (%s:%d)", remoteAddress.c_str(), remotePort);
+
+    sctp::ISctpHandler *handler = new mySctpHandler(this->m_base->sctpServer,clientId);
+
+    auto *entry = new ClientEntry;
+    m_clients[clientId] = entry;
+    printf("ClientId:%d\n",clientId);
+    entry->id = clientId;
+    entry->client = client;
+    entry->handler = handler;
+    entry->receiverThread = new ScopedThread(
+        [](void *arg) { ReceiverThread(reinterpret_cast<std::pair<sctp::SctpClient *, sctp::ISctpHandler *> *>(arg)); },
+        new std::pair<sctp::SctpClient *, sctp::ISctpHandler *>(client, handler));
+}
+
 void SctpTask::receiveAssociationSetup(int clientId, int associationId, int inStreams, int outStreams)
 {
     m_logger->debug("SCTP association setup ascId[%d]", associationId);
@@ -297,6 +383,21 @@ void SctpTask::receiveUnhandledNotification(int clientId)
     // Print warning
     m_logger->warn("Unhandled SCTP notification received");
 }
+void SctpTask::receiveHandover(int clientId)
+{
+    // NOTE: For unhandled notifications, "clientId" may be invalid for some notifications.
+    // Because some notification may be received after shutdown.
+
+    // Print warning
+//    ClientEntry *entry = m_clients[clientId];
+//     if (entry == nullptr)
+//     {
+//         m_logger->warn("Client entry not found for id: %d", clientId);
+//         return;
+//     }
+
+//     entry->client->send(stream, buffer.data(), 0, buffer.size());
+}
 
 void SctpTask::receiveConnectionClose(int clientId)
 {
@@ -328,8 +429,8 @@ void SctpTask::receiveSendMessage(int clientId, uint16_t stream, UniqueBuffer &&
         receiveClientReceive(clientId, 0, copy, data.length());
     }
 #else
-    entry->client->send(stream, buffer.data(), 0, buffer.size());
 #endif
+    entry->client->send(stream, buffer.data(), 0, buffer.size());
 }
 
 } // namespace nr::gnb

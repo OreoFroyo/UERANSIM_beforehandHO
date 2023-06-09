@@ -10,6 +10,7 @@
 
 #include <lib/rrc/encode.hpp>
 #include <ue/nas/task.hpp>
+#include <ue/rls/task.hpp>
 #include <ue/nts.hpp>
 #include <utils/random.hpp>
 
@@ -19,6 +20,9 @@
 #include <asn/rrc/ASN_RRC_RRCSetupComplete.h>
 #include <asn/rrc/ASN_RRC_RRCSetupRequest-IEs.h>
 #include <asn/rrc/ASN_RRC_RRCSetupRequest.h>
+#include <asn/rrc/ASN_RRC_RRCReconfigurationComplete.h>
+#include <asn/rrc/ASN_RRC_RRCReconfiguration.h>
+#include <asn/rrc/ASN_RRC_RRCReconfigurationComplete-IEs.h>
 
 namespace nr::ue
 {
@@ -148,6 +152,48 @@ void UeRrcTask::receiveRrcRelease(const ASN_RRC_RRCRelease &msg)
     m_logger->debug("RRC Release received");
     m_state = ERrcState::RRC_IDLE;
     m_base->nasTask->push(std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::RRC_CONNECTION_RELEASE));
+}
+
+void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
+{
+    m_logger->debug("RRC RrcReconfiguration received");
+
+    int cellId = m_base->shCtx.currentCell.get().cellId;
+    auto & lastCell = m_cellDesc[cellId];
+    if (cellId == 1){
+        cellId = 2;
+    }else{
+        cellId = 1;
+    }
+    ActiveCellInfo cellInfo = {};
+    auto & nextcell = m_cellDesc[cellId];
+    cellInfo.cellId = cellId;
+    cellInfo.plmn = nextcell.sib1.plmn;
+    cellInfo.tac = nextcell.sib1.tac;
+    cellInfo.category = ECellCategory::SUITABLE_CELL;
+    
+    m_base->shCtx.currentCell.set(cellInfo);
+    auto w1 = std::make_unique<NmUeRrcToRls>(NmUeRrcToRls::ASSIGN_CURRENT_CELL);
+    w1->cellId = cellId;
+    m_base->rlsTask->push(std::move(w1));
+    auto w2 = std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::ACTIVE_CELL_CHANGED);
+    w2->previousTai = Tai{lastCell.sib1.plmn, lastCell.sib1.tac};
+    m_base->nasTask->push(std::move(w2));
+     // m_state = ERrcState::RRC_IDLE;
+    auto *pdu = asn::New<ASN_RRC_UL_DCCH_Message>();
+    pdu->message.present = ASN_RRC_UL_DCCH_MessageType_PR_c1;
+    pdu->message.choice.c1 = asn::NewFor(pdu->message.choice.c1);
+    pdu->message.choice.c1->present = ASN_RRC_UL_DCCH_MessageType__c1_PR_rrcReconfigurationComplete;
+
+    auto &reconfigComplete = pdu->message.choice.c1->choice.rrcReconfigurationComplete = asn::New<ASN_RRC_RRCReconfigurationComplete>();
+    reconfigComplete->rrc_TransactionIdentifier = msg.rrc_TransactionIdentifier;
+    reconfigComplete->criticalExtensions.present = ASN_RRC_RRCReconfigurationComplete__criticalExtensions_PR_rrcReconfigurationComplete;
+
+    auto &ies = reconfigComplete->criticalExtensions.choice.rrcReconfigurationComplete = asn::New<ASN_RRC_RRCReconfigurationComplete_IEs>();
+    
+    sendRrcMessage(pdu);
+
+    m_base->nasTask->push(std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::RRC_CONNECTION_RECONFIGURATION));
 }
 
 void UeRrcTask::handleEstablishmentFailure()

@@ -203,9 +203,11 @@ struct ConfigurationUpdateComplete : PlainMmMessage
 
 struct Handover : PlainMmMessage
 {
+    std::optional<IEEapMessage> eapMessage{};
+    
     Handover();
     void onBuild(NasMessageBuilder &b);
-}
+};
 
 struct DeRegistrationAcceptUeOriginating : PlainMmMessage
 {

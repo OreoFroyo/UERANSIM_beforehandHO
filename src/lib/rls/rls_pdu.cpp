@@ -7,7 +7,7 @@
 //
 
 #include "rls_pdu.hpp"
-
+#include <iostream>
 #include <utils/constants.hpp>
 
 namespace rls
@@ -89,6 +89,13 @@ std::unique_ptr<RlsMessage> DecodeRlsMessage(const OctetView &stream)
         res->pduId = stream.read4UI();
         res->payload = stream.read4UI();
         res->pdu = stream.readOctetString(stream.read4I());
+        // std::cout<<"-------------------rls_pdu----------------------"<<std::endl;
+        // std::cout<< "res->msgType:" << static_cast<int>(res->msgType) << std::endl;
+        // std::cout<< "res->pduId:" << res->pduId<< std::endl;
+        // std::cout<< "res->payload:" << res->payload<< std::endl;
+        // std::cout<< "res->pdu:" << res->pdu.data()<< std::endl;
+        // std::cout<< "res->pduType:" << static_cast<int>(res->pduType)<< std::endl;
+        // std::cout<< "res->sti:" << res->sti<< std::endl;
         return res;
     }
     else if (msgType == EMessageType::PDU_TRANSMISSION_ACK)

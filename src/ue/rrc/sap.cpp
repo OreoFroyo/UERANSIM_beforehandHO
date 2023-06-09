@@ -39,6 +39,10 @@ void UeRrcTask::handleNasSapMessage(NmUeNasToRrc &msg)
 {
     switch (msg.present)
     {
+    case NmUeNasToRrc::MEASUREMENT_REPORT:{
+        deliverMeasurementPeport(msg.pduId, std::move(msg.nasPdu));
+        break;
+    }
     case NmUeNasToRrc::UPLINK_NAS_DELIVERY: {
         deliverUplinkNas(msg.pduId, std::move(msg.nasPdu));
         break;

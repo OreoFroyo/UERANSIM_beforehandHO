@@ -21,6 +21,8 @@
 #include <asn/ngap/ASN_NGAP_QosFlowSetupRequestList.h>
 #include <asn/rrc/ASN_RRC_InitialUE-Identity.h>
 
+ 
+
 namespace nr::gnb
 {
 
@@ -30,7 +32,7 @@ class NgapTask;
 class GnbRrcTask;
 class GnbRlsTask;
 class SctpTask;
-
+class GnbSctpServer;
 enum class EAmfState
 {
     NOT_CONNECTED = 0,
@@ -344,6 +346,8 @@ struct TaskBase
     GnbRrcTask *rrcTask{};
     SctpTask *sctpTask{};
     GnbRlsTask *rlsTask{};
+    GnbSctpServer *sctpServer{};
+    
 };
 
 Json ToJson(const GnbStatusInfo &v);

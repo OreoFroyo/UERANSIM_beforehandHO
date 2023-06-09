@@ -22,6 +22,7 @@ void SetEventOptions(int sd);
 void StartListening(int sd);
 void CloseSocket(int sd);
 void Accept(int sd);
+int  MyAccept(int sd);
 void Connect(int sd, const std::string &address, uint16_t port);
 void SendMessage(int sd, const uint8_t *buffer, size_t length, int ppid, uint16_t stream);
 void ReceiveMessage(int sd, uint32_t ppid, ISctpHandler *handler);

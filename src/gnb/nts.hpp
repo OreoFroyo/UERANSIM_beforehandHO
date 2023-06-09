@@ -166,6 +166,7 @@ struct NmGnbNgapToRrc : NtsMessage
         NAS_DELIVERY,
         AN_RELEASE,
         PAGING,
+        EXCHANGE_RRC,
     } present;
 
     // NAS_DELIVERY
@@ -190,7 +191,9 @@ struct NmGnbRrcToNgap : NtsMessage
     {
         INITIAL_NAS_DELIVERY,
         UPLINK_NAS_DELIVERY,
-        RADIO_LINK_FAILURE
+        RADIO_LINK_FAILURE,
+        HANDOVER_REQUEST,
+        SEND_PATHSWITCH,
     } present;
 
     // INITIAL_NAS_DELIVERY
@@ -250,6 +253,8 @@ struct NmGnbSctp : NtsMessage
         RECEIVE_MESSAGE,
         SEND_MESSAGE,
         UNHANDLED_NOTIFICATION,
+        HANDOVER,
+        GNB_CONNECTION_REQUEST
     } present;
 
     // CONNECTION_REQUEST
@@ -268,7 +273,7 @@ struct NmGnbSctp : NtsMessage
     uint16_t remotePort{};
     sctp::PayloadProtocolId ppid{};
     NtsTask *associatedTask{};
-
+        
     // ASSOCIATION_SETUP
     int associationId{};
     int inStreams{};

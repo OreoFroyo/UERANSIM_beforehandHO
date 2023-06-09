@@ -115,6 +115,9 @@ static void EncodeMm(PlainMmMessage &msg, OctetString &stream)
     case EMessageType::DL_NAS_TRANSPORT:
         EncodeViaBuilder((DlNasTransport &)msg, stream);
         break;
+    case EMessageType::HANDOVER:
+        EncodeViaBuilder((Handover &)msg, stream);
+        break;
     default:
         throw std::runtime_error("invalid NAS message type");
     }

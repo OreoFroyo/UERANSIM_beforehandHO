@@ -9,7 +9,8 @@
 #pragma once
 
 #include <string>
-
+#include <thread>
+#include "types.hpp"
 namespace sctp
 {
 
@@ -17,13 +18,15 @@ class SctpServer
 {
   private:
     int sd;
+    int clientsd;
+    std::thread thread;
+    sctp::ISctpHandler* handler;
 
   public:
-    SctpServer(const std::string &address, uint16_t port);
+    SctpServer(const std::string &address, uint16_t port,sctp::ISctpHandler* newhandler);
     ~SctpServer();
-
-    void start();
-
+    void loop();
+    void start();    
     // TODO: Other functionalities
 };
 
