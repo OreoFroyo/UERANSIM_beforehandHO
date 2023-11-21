@@ -200,12 +200,14 @@ void SctpTask::onLoop()
             break;
         }
         default:
+            m_logger->info("wrong3 way");
             m_logger->unhandledNts(*msg);
             break;
         }
         break;
     }
     default:
+        m_logger->info("wrong2 way");
         m_logger->unhandledNts(*msg);
         break;
     }

@@ -14,7 +14,7 @@
 #include <gnb/app/task.hpp>
 #include <gnb/rrc/task.hpp>
 #include <gnb/sctp/task.hpp>
-
+#include <gnb/sctp/server.hpp>
 #include <asn/ngap/ASN_NGAP_AMFConfigurationUpdate.h>
 #include <asn/ngap/ASN_NGAP_AMFConfigurationUpdateFailure.h>
 #include <asn/ngap/ASN_NGAP_AMFName.h>
@@ -30,7 +30,12 @@
 #include <asn/ngap/ASN_NGAP_ServedGUAMIItem.h>
 #include <asn/ngap/ASN_NGAP_SliceSupportItem.h>
 #include <asn/ngap/ASN_NGAP_SupportedTAItem.h>
-
+#include <asn/ngap/ASN_NGAP_PathSwitchRequestAcknowledgeTransfer.h>
+#include <asn/ngap/ASN_NGAP_PDUSessionResourceSwitchedList.h>
+#include <asn/ngap/ASN_NGAP_PDUSessionResourceSwitchedItem.h>
+#include <gnb/ngap/encode.hpp>
+#include <asn/ngap/ASN_NGAP_GTPTunnel.h>
+#include <asn/ngap/ASN_NGAP_QosFlowSetupRequestItem.h>
 namespace nr::gnb
 {
 
@@ -357,5 +362,88 @@ void NgapTask::receiveOverloadStop(int amfId, ASN_NGAP_OverloadStop *msg)
 
     // TODO
 }
+
+void NgapTask::handleBeforehandHandoverMessage(int ueId)
+{
+    m_logger->info("NgapTask::handleBeforehandHandoverMessage");// auto  
+    OCTET_STRING gnb_ip = {};
+    gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+    gnb_ip.size = 4;
+    for (int i=0;i<gnb_ip.size;i++){
+        gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+        m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+    }
+    auto *pdu = sendPathSwitchRequestwithTargetIp(ueId,gnb_ip);
+    ssize_t encoded;
+    uint8_t *buffer;
+    bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
+    m_logger->info("length of buffer is : %d",encoded);
+    cJSON *json = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json, "beforehand", 0);
+    cJSON_AddNumberToObject(json, "ueId", ueId);
+    cJSON_AddNumberToObject(json, "ack", 0);
+    cJSON_AddNumberToObject(json, "length", encoded);
+    cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+    cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+    cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+    cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+    cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
+    auto encodeStr = cJSON_PrintUnformatted(json);
+    sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+    sendXnapMessage(buffer,encoded);
+}
+
+void NgapTask::receivePathSwitchRequestAck(int amfId, ASN_NGAP_PathSwitchRequestAcknowledge *msg)
+{
+    m_logger->info("PathSwitchRequest is successful");
+    auto pair = ngap_utils::FindNgapIdPair(msg);
+    m_logger->info("amfid:%llu,ranid:%llu",pair.amfUeNgapId,pair.ranUeNgapId);
+    auto * ueCtx = findUeByNgapIdPair(amfId,pair);
+    m_logger->info("ue info:%d",ueCtx->ctxId);
+    auto *ie = asn::ngap::GetProtocolIe(msg, ASN_NGAP_ProtocolIE_ID_id_PDUSessionResourceSwitchedList);
+    /*if (ie){
+        asn::ForeachItem(ie->PDUSessionResourceSwitchedList,[this,ueCtx](ASN_NGAP_PDUSessionResourceSwitchedItem & item){
+            m_logger->info("PDUsessionid: %lu",item.pDUSessionID);
+            auto * transfer = ngap_encode::Decode<ASN_NGAP_PathSwitchRequestAcknowledgeTransfer>(
+                    asn_DEF_ASN_NGAP_PathSwitchRequestAcknowledgeTransfer, item.pathSwitchRequestAcknowledgeTransfer);
+            // transfer -> uL_NGU_UP_TNLInformation.choice.gTPTunnel;
+            auto *resource = new PduSessionResource(ueCtx->ctxId, static_cast<int>(item.pDUSessionID));
+            resource->sessionType = PduSessionType::IPv4;
+            {
+                resource->upTunnel.teid =
+                    (uint32_t)asn::GetOctet4(transfer-> uL_NGU_UP_TNLInformation->choice.gTPTunnel->gTP_TEID);
+
+                resource->upTunnel.address =
+                    asn::GetOctetString(transfer-> uL_NGU_UP_TNLInformation->choice.gTPTunnel->transportLayerAddress);
+            }
+            m_logger->info("before out address");
+            auto address = resource->upTunnel.address.data() ;
+            for (int i=0;i<resource->upTunnel.address.length();i++){
+                m_logger->info("address: %d",*(address+i));
+            }
+
+            // *(resource->upTunnel.address.data()) = 192;
+            // *(resource->upTunnel.address.data()+1) = 168;
+            // *(resource->upTunnel.address.data()+2) = 247;
+            // *(resource->upTunnel.address.data()+3) = 154;
+            // address = resource->upTunnel.address.data() ;
+            // for (int i=0;i<resource->upTunnel.address.length();i++){
+            //     m_logger->info("address: %d",*(address+i));
+            // }
+            auto *ptr = asn::New<ASN_NGAP_QosFlowSetupRequestList>();
+            {
+                ASN_NGAP_QosFlowSetupRequestItem * newitem = asn::New<ASN_NGAP_QosFlowSetupRequestItem>();
+                newitem->qosFlowIdentifier = 1l;
+                asn::SequenceAdd(*ptr,newitem);
+            }
+
+            resource->qosFlows = asn::WrapUnique(ptr, asn_DEF_ASN_NGAP_QosFlowSetupRequestList);
+
+            setupPduSessionResource(ueCtx, resource);
+        });
+    }*/
+    // TODO
+}
+
 
 } // namespace nr::gnb

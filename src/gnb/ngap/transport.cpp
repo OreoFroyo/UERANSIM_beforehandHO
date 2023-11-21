@@ -412,6 +412,9 @@ void NgapTask::handleSctpMessage(int amfId, uint16_t stream, const UniqueBuffer 
         case ASN_NGAP_SuccessfulOutcome__value_PR_NGSetupResponse:
             receiveNgSetupResponse(amf->ctxId, &value.choice.NGSetupResponse);
             break;
+        case ASN_NGAP_SuccessfulOutcome__value_PR_PathSwitchRequestAcknowledge:
+            receivePathSwitchRequestAck(amf->ctxId, &value.choice.PathSwitchRequestAcknowledge);
+            break;
         default:
             m_logger->err("Unhandled NGAP successful-outcome received (%d)", value.present);
             break;

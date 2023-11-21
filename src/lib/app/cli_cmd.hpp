@@ -30,6 +30,8 @@ struct GnbCliCommand
         UE_COUNT,
         UE_RELEASE_REQ,
         XNAP_CONNECTION,
+        PATH_SWITCH_REQ,
+        BEFOREHAND_HANDOVER,
     } present;
 
     // AMF_INFO

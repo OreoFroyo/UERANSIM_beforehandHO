@@ -81,6 +81,64 @@ void NgapTask::onLoop()
             handleRadioLinkFailure(w.ueId);
             break;
         }
+        case NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH:{
+            m_logger->info("NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH");
+            createUeContext(w.ueId);
+            auto *ueCtx = findUeContext(w.ueId);
+            if (ueCtx == nullptr)
+                return;
+            auto *amfCtx = findAmfContext(ueCtx->associatedAmfId);
+            if (amfCtx == nullptr)
+                return;
+            amfCtx->nextStream = (amfCtx->nextStream + 1) % amfCtx->association.outStreams;
+            if ((amfCtx->nextStream == 0) && (amfCtx->association.outStreams > 1))
+                amfCtx->nextStream += 1;
+            ueCtx->uplinkStream = amfCtx->nextStream;
+            auto w1 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_UPDATE);
+            ueCtx->ueAmbr.ulAmbr = 1ull<<63;
+            ueCtx->ueAmbr.dlAmbr = 1ull<<63;
+            w1->update = std::make_unique<GtpUeContextUpdate>(false, ueCtx->ctxId, ueCtx->ueAmbr);
+            m_base->gtpTask->push(std::move(w1));
+            m_logger->info("Prepare store pdu");
+            auto* pdu = m_base->sctpServer->storePdu;
+            m_logger->info("Store pdu prepared");
+            ASN_NGAP_PathSwitchRequest_t  *msg = &pdu->choice.initiatingMessage->value.choice.PathSwitchRequest;
+            auto *ieList = asn::ngap::GetProtocolIe(msg, ASN_NGAP_ProtocolIE_ID_id_PDUSessionResourceToBeSwitchedDLList);
+            if (ieList)
+            {
+                auto &list = ieList->PDUSessionResourceToBeSwitchedDLList.list;
+                for (int i = 0; i < list.count; i++)
+                {
+                    auto &item = list.array[i];
+                    auto *resource = new PduSessionResource(ueCtx->ctxId, static_cast<int>(item->pDUSessionID));
+                    resource->sessionType = PduSessionType::IPv4;
+                    auto *transfer = ngap_encode::Decode<ASN_NGAP_PathSwitchRequestTransfer>(
+                    asn_DEF_ASN_NGAP_PathSwitchRequestTransfer, item->pathSwitchRequestTransfer);
+                    {
+                        resource->upTunnel.teid =m_base->sctpServer->ul_teid;
+                        resource->upTunnel.address =
+                            asn::GetOctetString(transfer->dL_NGU_UP_TNLInformation.choice.gTPTunnel->transportLayerAddress);
+                    }
+                    for (int i=0;i<resource->upTunnel.address.length();i++){
+                        *(resource->upTunnel.address.data()+i) =  m_base->sctpServer->ul_ip[i]; 
+                    }
+                    auto *ptr = asn::New<ASN_NGAP_QosFlowSetupRequestList>();
+                    {
+                        ASN_NGAP_QosFlowAcceptedItem * setupitem =  transfer->qosFlowAcceptedList.list.array[0];
+                        ASN_NGAP_QosFlowSetupRequestItem * newitem = asn::New<ASN_NGAP_QosFlowSetupRequestItem>();
+                        newitem->qosFlowIdentifier = setupitem->qosFlowIdentifier;
+                        asn::SequenceAdd(*ptr,newitem);
+                    }
+
+                    resource->qosFlows = asn::WrapUnique(ptr, asn_DEF_ASN_NGAP_QosFlowSetupRequestList);
+
+                    setupPduSessionResource(ueCtx, resource);
+                }
+            }
+            pdu->choice.initiatingMessage->procedureCode = 18; //location report
+            sendNgapUeAssociated(w.ueId, pdu);
+            break;
+        }
         case NmGnbRrcToNgap::SEND_PATHSWITCH:{
             createUeContext(w.ueId);
             auto *ueCtx = findUeContext(w.ueId);
@@ -112,15 +170,12 @@ void NgapTask::onLoop()
                     auto *transfer = ngap_encode::Decode<ASN_NGAP_PathSwitchRequestTransfer>(
                     asn_DEF_ASN_NGAP_PathSwitchRequestTransfer, item->pathSwitchRequestTransfer);
                     {
-                        resource->upTunnel.teid =
-                            (uint32_t)asn::GetOctet4(transfer->dL_NGU_UP_TNLInformation.choice.gTPTunnel->gTP_TEID);
-
+                        resource->upTunnel.teid =m_base->sctpServer->ul_teid;
                         resource->upTunnel.address =
                             asn::GetOctetString(transfer->dL_NGU_UP_TNLInformation.choice.gTPTunnel->transportLayerAddress);
                     }
-                    auto address = resource->upTunnel.address.data() ;
                     for (int i=0;i<resource->upTunnel.address.length();i++){
-                        m_logger->info("address: %d",*(address+i));
+                        *(resource->upTunnel.address.data()+i) =  m_base->sctpServer->ul_ip[i]; 
                     }
 
                     // *(resource->upTunnel.address.data()) = 192;
@@ -215,30 +270,28 @@ void NgapTask::onLoop()
             break;
         }
         case NmGnbRrcToNgap::HANDOVER_REQUEST: {
-            m_logger->info("NGAP receive handover request");// auto 
-            // cJSON *json = cJSON_CreateObject();
-            // printf("w.ueId:%d\n",w.ueId);
-            // uint64_t ueSti = m_base->rlsTask->getudp()->findUeSti(w.ueId);
-            // printf("ueSti:%lu\n",ueSti);
-            // char ueStiStr[256] = {0};
-            // sprintf(ueStiStr,"%llu",ueSti);
-            // puts(ueStiStr);
-            // cJSON_AddStringToObject(json,"ueSti",ueStiStr);
-            // auto aa = cJSON_PrintUnformatted(json);
-            // printf("ngap::send::UeSti:%s\n",aa);
-            // sendXnapMessage((uint8_t*)aa, strlen(aa));
-            auto *pdu = sendPathSwitchRequest(w.ueId);
+            m_logger->info("NGAP receive handover request");// auto  
+            OCTET_STRING gnb_ip = {};
+            gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+            gnb_ip.size = 4;
+            for (int i=0;i<gnb_ip.size;i++){
+                gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+                m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+            }
+            auto *pdu = sendPathSwitchRequestwithTargetIp(w.ueId,gnb_ip);
             ssize_t encoded;
             uint8_t *buffer;
             bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
             m_logger->info("length of buffer is : %d",encoded);
             cJSON *json = cJSON_CreateObject();
             cJSON_AddNumberToObject(json, "ueId", w.ueId);
-            //cJSON_AddStringToObject(json, "buffer", (char *)buffer);
-            
-            //m_logger->info("%s",cJSON_GetObjectItem(json,"buffer")->valuestring);
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
+            cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+            cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+            cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+            cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+            cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
             auto encodeStr = cJSON_PrintUnformatted(json);
             //char wholeEncode[1000] = {};
             // memcpy(wholeEncode,encodeStr,strlen(encodeStr));
@@ -246,6 +299,35 @@ void NgapTask::onLoop()
             sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
             sendXnapMessage(buffer,encoded);
 
+            break;
+        }
+        case NmGnbRrcToNgap::BEFOREHAND_HANDOVER: {
+            m_logger->info("NgapTask::handleBeforehandHandoverMessage");// auto  
+            OCTET_STRING gnb_ip = {};
+            gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+            gnb_ip.size = 4;
+            for (int i=0;i<gnb_ip.size;i++){
+                gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+                m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+            }
+            auto *pdu = sendPathSwitchRequestwithTargetIp(w.ueId,gnb_ip);
+            ssize_t encoded;
+            uint8_t *buffer;
+            bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
+            m_logger->info("length of buffer is : %d",encoded);
+            cJSON *json = cJSON_CreateObject();
+            cJSON_AddNumberToObject(json, "beforehand", 0);
+            cJSON_AddNumberToObject(json, "ueId", w.ueId);
+            cJSON_AddNumberToObject(json, "ack", 0);
+            cJSON_AddNumberToObject(json, "length", encoded);
+            cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+            cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+            cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+            cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+            cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
+            auto encodeStr = cJSON_PrintUnformatted(json);
+            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+            sendXnapMessage(buffer,encoded);
             break;
         }
         }
@@ -264,13 +346,18 @@ void NgapTask::onLoop()
         case NmGnbSctp::ASSOCIATION_SHUTDOWN:
             handleAssociationShutdown(w.clientId);
             break;
+        case NmGnbSctp::BEFOREHAND_HANDOVER:
+            handleBeforehandHandoverMessage(w.clientId);
+            break;
         default:
+            m_logger->info("right way");
             m_logger->unhandledNts(*msg);
             break;
         }
         break;
     }
     default: {
+        m_logger->info("wrong way");
         m_logger->unhandledNts(*msg);
         break;
     }

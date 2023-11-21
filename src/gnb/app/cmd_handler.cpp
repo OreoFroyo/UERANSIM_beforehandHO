@@ -14,6 +14,7 @@
 #include <gnb/rls/task.hpp>
 #include <gnb/rrc/task.hpp>
 #include <gnb/sctp/task.hpp>
+#include <gnb/sctp/server.hpp>
 #include <utils/common.hpp>
 #include <utils/printer.hpp>
 
@@ -160,11 +161,56 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
         msg1->localAddress = m_base->config->ngapIp;
         msg1->localPort = 0;
         msg1->remoteAddress = msg.cmd->gnbIp;
+        std::string octet;
+        int octetValue = 0;
+
+        for (int i = 0; i < 4; i++) {
+            octet.clear();
+            size_t pos = msg1->remoteAddress.find('.');
+            
+            if (pos != std::string::npos) {
+                octet = msg1->remoteAddress.substr(0, pos);
+                msg1->remoteAddress = msg1->remoteAddress.substr(pos + 1);
+            } else {
+                octet = msg1->remoteAddress;
+            }
+            
+            // Convert the octet string to an integer and store it in target_ip
+            octetValue = std::stoi(octet);
+            m_base->sctpServer->target_ip[i] = octetValue;
+        }
+
+        msg1->remoteAddress = msg.cmd->gnbIp;
+
         msg1->remotePort = std::atoi(msg.cmd->port.c_str());
         msg1->ppid = sctp::PayloadProtocolId::NGAP;
         msg1->associatedTask = m_base->ngapTask; 
         m_base->sctpTask->push(std::move(msg1));
         sendResult(msg.address,"XnAP Connection Setup Successfully");
+        break;
+    }
+    case app::GnbCliCommand::PATH_SWITCH_REQ: {
+        if (m_base->ngapTask->m_ueCtx.count(msg.cmd->ueId) == 0)
+            sendError(msg.address, "UE not found with given ID");
+        else
+        {
+            auto ue = m_base->ngapTask->m_ueCtx[msg.cmd->ueId];
+            auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
+            w->ueId = ue->ctxId;
+            //m_base->rrcTask->push(std::move(w));
+            m_base->ngapTask->sendPathSwitchRequest(ue->ctxId);
+            sendResult(msg.address, "Requesting Path Switch Request");
+            //sendResult(msg.address, "Send rrc reconfiguration to ue");
+        }
+        break;
+    }
+    case app::GnbCliCommand::BEFOREHAND_HANDOVER: {
+        auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::BEFOREHAND_HANDOVER);
+        auto ue = m_base->ngapTask->m_ueCtx[msg.cmd->ueId];
+        w->ueId = ue->ctxId;
+        m_base->ngapTask->push(std::move(w));
+        sendResult(msg.address,"Beforehand Handover Message Send Successfully");
+        break;
     }
     }
 }

@@ -18,6 +18,9 @@ class GnbSctpServer
     public:
         TaskBase *m_base;
         ASN_NGAP_NGAP_PDU *storePdu;
+        char target_ip[4];
+        uint32_t ul_teid;
+        char ul_ip[4];
     private:
         sctp::SctpServer * sctpserver;
         
@@ -75,7 +78,7 @@ class mySctpHandler : public sctp::ISctpHandler
         // printf("ueSti:%ld\n",ueSti);
         // this->server->m_base->ngapTask->UeHandover(ueSti);
         
-
+        
         auto *data1 = new uint8_t[length];
         std::memcpy(data1, buffer, length);
         const char* data = (const char*)(char*)data1;
@@ -84,6 +87,9 @@ class mySctpHandler : public sctp::ISctpHandler
         if (json){
             cJSON* item = cJSON_GetObjectItem(json,"ack");
             int ack = item->valueint;
+
+            cJSON* item2 = cJSON_GetObjectItem(json,"beforehand");
+            int beforehand = item2->valueint;
             if(ack == 0){
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 int ueId = ueIdC->valueint;
@@ -94,9 +100,21 @@ class mySctpHandler : public sctp::ISctpHandler
                 cJSON* length1 = cJSON_GetObjectItem(json, "length");
                 int lengthStr = length1->valueint;
                 printf("length is : %d\n",lengthStr);
+                cJSON* teid = cJSON_GetObjectItem(json, "upf_teid");
+                server->ul_teid = teid->valueint;
+                char * up_adress[4] = {};
+                cJSON* ip0 = cJSON_GetObjectItem(json, "upf_ip0");
+                cJSON* ip1 = cJSON_GetObjectItem(json, "upf_ip1");
+                cJSON* ip2 = cJSON_GetObjectItem(json, "upf_ip2");
+                cJSON* ip3 = cJSON_GetObjectItem(json, "upf_ip3");
+                server->ul_ip[0] = ip0->valueint;
+                server->ul_ip[1] = ip1->valueint;
+                server->ul_ip[2] = ip2->valueint;
+                server->ul_ip[3] = ip3->valueint;
                 
                 cJSON *json = cJSON_CreateObject();
                 cJSON_AddNumberToObject(json, "ack", 1);
+                cJSON_AddNumberToObject(json, "beforehand", 1);
                 cJSON_AddNumberToObject(json, "ueId", ueId);
                 unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json);
                 auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
@@ -105,6 +123,15 @@ class mySctpHandler : public sctp::ISctpHandler
                 msg->buffer = UniqueBuffer{encodeStr, strlen((char *)encodeStr)};
                 printf("send buffer: %s\n",(char *)msg->buffer.data());
                 server->m_base->sctpTask->push(std::move(msg));
+            }
+            else if(beforehand == 1){
+                printf("beforehand == 1");
+                cJSON* ueIdc = cJSON_GetObjectItem(json, "ueId");
+                int ueId1 = ueIdc->valueint;
+                auto ue1 = server->m_base->ngapTask->getUectx(ueId1);
+                auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
+                w1->ueId = ue1->ctxId;
+                server->m_base->ngapTask->push(std::move(w1));
             }
             else if(ack == 1){
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");

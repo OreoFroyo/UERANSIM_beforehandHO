@@ -120,7 +120,7 @@ void GtpTask::handleSessionCreate(PduSessionResource *session)
     m_pduSessions[sessionInd] = std::unique_ptr<PduSessionResource>(session);
 
     m_sessionTree.insert(sessionInd, session->downTunnel.teid);
-
+    m_logger->info("Create pdu session with downTunnel id %d", session->downTunnel.teid);
     updateAmbrForUe(session->ueId);
     updateAmbrForSession(sessionInd);
 }
@@ -240,6 +240,9 @@ void GtpTask::handleUdpReceive(const udp::NwUdpServerReceive &msg)
         {
             m_logger->err("TEID %d not found on GTP-U Downlink", gtp->teid);
             return;
+        } else {
+            m_logger->info("TEID %d have found on GTP-U Downlink", gtp->teid);
+
         }
 
         if (m_rateLimiter->allowDownlinkPacket(sessionInd, gtp->payload.length()))

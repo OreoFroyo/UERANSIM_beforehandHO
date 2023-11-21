@@ -39,6 +39,8 @@
 #include <asn/rrc/ASN_RRC_MeasurementReport-IEs.h>
 #include <asn/rrc/ASN_RRC_RRCReconfiguration.h>
 #include <asn/rrc/ASN_RRC_RRCReconfiguration-IEs.h>
+#include <asn/rrc/ASN_RRC_MobilityFromNRCommand.h>
+#include <asn/rrc/ASN_RRC_MobilityFromNRCommand-IEs.h>
 
 namespace nr::gnb
 {
@@ -116,6 +118,7 @@ void GnbRrcTask::exchangeRRCConnection(int ueId)
     asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);
 
 }
+
 
 void GnbRrcTask::handleRadioLinkFailure(int ueId)
 {

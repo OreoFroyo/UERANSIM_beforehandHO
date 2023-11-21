@@ -35,6 +35,7 @@ extern "C"
     struct ASN_NGAP_PDUSessionResourceReleaseCommand;
     struct ASN_NGAP_Paging;
     struct ASN_NGAP_PathSwitchRequest;
+    struct ASN_NGAP_PathSwitchRequestAcknowledge;
 }
 
 namespace nr::gnb
@@ -64,6 +65,7 @@ class NgapTask : public NtsTask
     ~NgapTask() override = default;
     void UeHandover(uint64_t sti);
     ASN_NGAP_NGAP_PDU* sendPathSwitchRequest(int ueId);
+    ASN_NGAP_NGAP_PDU* sendPathSwitchRequestwithTargetIp(int ueId,OCTET_STRING target_ip);
     NgapUeContext* getUectx(int ueId){return m_ueCtx[ueId];};
     
   protected:
@@ -95,6 +97,7 @@ class NgapTask : public NtsTask
     void receiveOverloadStart(int amfId, ASN_NGAP_OverloadStart *msg);
     void receiveOverloadStop(int amfId, ASN_NGAP_OverloadStop *msg);
 
+    void receivePathSwitchRequestAck(int amfId, ASN_NGAP_PathSwitchRequestAcknowledge *msg);
     /* Message transport */
     void sendNgapNonUe(int amfId, ASN_NGAP_NGAP_PDU *pdu);
     void sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu);
@@ -130,6 +133,9 @@ class NgapTask : public NtsTask
     /* Radio resource control */
     void handleRadioLinkFailure(int ueId);
     void receivePaging(int amfId, ASN_NGAP_Paging *msg);
+    void handleBeforehandHandoverMessage(int ueId);
+
+
 
     
 };

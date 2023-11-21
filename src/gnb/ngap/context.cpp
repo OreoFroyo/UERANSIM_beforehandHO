@@ -57,6 +57,7 @@
 #include <asn/ngap/ASN_NGAP_QosFlowAcceptedItem.h>
 #include <asn/ngap/ASN_NGAP_PDUSessionResourceToBeSwitchedDLItem.h>
 #include <utils/network.cpp>
+#include <gnb/sctp/server.hpp>
 namespace nr::gnb
 {
 
@@ -351,6 +352,218 @@ void NgapTask::UeHandover(uint64_t sti){
     m_base->rrcTask->push(std::move(w1));
 }
 
+ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp(int ueId, OCTET_STRING target_ip){
+    ASN_NGAP_AMF_UE_NGAP_ID_t *AMF_UE_NGAP_ID = NULL;
+    ASN_NGAP_UESecurityCapabilities_t *UESecurityCapabilities = NULL;
+    ASN_NGAP_PDUSessionResourceToBeSwitchedDLList_t
+        *PDUSessionResourceToBeSwitchedDLList = NULL;
+    ASN_NGAP_PDUSessionResourceToBeSwitchedDLItem_t *PDUSessionItem = NULL;
+    // NGAP_PathSwitchRequestTransfer_t 
+    OCTET_STRING_t *transfer = NULL;
+
+    m_logger->debug("Sending Path Switch request");
+
+    auto *ue = findUeContext(ueId);
+    if (ue == nullptr)
+        m_logger->info("ue is null");
+
+    std::vector<ASN_NGAP_PathSwitchRequestIEs *> ies;
+
+
+    //auto *respPdu = asn::ngap::NewMessagePdu<ASN_NGAP_PDUSessionResourceSetupResponse>(responseIes);
+    auto *ie = asn::New<ASN_NGAP_PathSwitchRequestIEs>();
+    ie->id = ASN_NGAP_ProtocolIE_ID_id_SourceAMF_UE_NGAP_ID;
+    ie->criticality = ASN_NGAP_Criticality_reject;
+    ie->value.present = ASN_NGAP_PathSwitchRequestIEs__value_PR_AMF_UE_NGAP_ID;
+    // auto *id = asn::New<ASN_NGAP_RAN_UE_NGAP_ID_t>();
+    AMF_UE_NGAP_ID = &ie->value.choice.AMF_UE_NGAP_ID;
+    m_logger->debug("%d",ue->amfUeNgapId);
+    m_logger->debug("%d",ie->value.choice.AMF_UE_NGAP_ID);
+
+    asn::SetSigned64(ue->amfUeNgapId, *AMF_UE_NGAP_ID);
+    // auto *id = asn::New<ASN_NGAP_RAN_UE_NGAP_ID_t>();
+    // *id = ue->amfUeNgapId;
+    m_logger->debug("%d",*ie->value.choice.AMF_UE_NGAP_ID.buf);
+
+    // ie->value.choice.RAN_UE_NGAP_ID = *id;
+    ies.push_back(ie);
+    // auto msgType = static_cast<asn::ngap::NgapMessageType>(asn::ngap::NgapMessageTypeToEnum<ASN_NGAP_PathSwitchRequest>::V);
+
+    // void *pDescription = nullptr;
+    // void *pMessage = asn::ngap::NewDescFromMessageType(msgType, pDescription);
+    // for (auto &ie : ies){
+    //     asn::ngap::AddProtocolIe(*reinterpret_cast<ASN_NGAP_PathSwitchRequest *>(pMessage), ie);
+    // }
+    // auto *pdu =  asn::ngap::NgapPduFromPduDescription(reinterpret_cast<ASN_NGAP_InitiatingMessage *>(pDescription));
+    ie = asn::New<ASN_NGAP_PathSwitchRequestIEs>();
+    ie->id = ASN_NGAP_ProtocolIE_ID_id_UESecurityCapabilities;
+    ie->criticality = ASN_NGAP_Criticality_ignore;
+    ie->value.present =
+        ASN_NGAP_PathSwitchRequestIEs__value_PR_UESecurityCapabilities;
+
+    UESecurityCapabilities = &ie->value.choice.UESecurityCapabilities;
+    ies.push_back(ie);
+
+    UESecurityCapabilities->nRencryptionAlgorithms.size = 2;
+    UESecurityCapabilities->nRencryptionAlgorithms.buf =
+        (uint8_t *)CALLOC(UESecurityCapabilities->
+                    nRencryptionAlgorithms.size, sizeof(uint8_t));
+    UESecurityCapabilities->nRencryptionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->nRencryptionAlgorithms.buf[0] =
+        (0 << 1);
+
+    UESecurityCapabilities->nRintegrityProtectionAlgorithms.size = 2;
+    UESecurityCapabilities->nRintegrityProtectionAlgorithms.buf =
+        (uint8_t *)CALLOC(UESecurityCapabilities->
+                    nRintegrityProtectionAlgorithms.size, sizeof(uint8_t));
+    UESecurityCapabilities->nRintegrityProtectionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->nRintegrityProtectionAlgorithms.buf[0] =
+        (0 << 1);
+
+    UESecurityCapabilities->eUTRAencryptionAlgorithms.size = 2;
+    UESecurityCapabilities->eUTRAencryptionAlgorithms.buf =
+        (uint8_t *)CALLOC(UESecurityCapabilities->
+                    eUTRAencryptionAlgorithms.size, sizeof(uint8_t));
+    UESecurityCapabilities->eUTRAencryptionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->eUTRAencryptionAlgorithms.buf[0] =
+        (0 << 1);
+
+    UESecurityCapabilities->eUTRAintegrityProtectionAlgorithms.size = 2;
+    UESecurityCapabilities->eUTRAintegrityProtectionAlgorithms.buf =
+        (uint8_t *)CALLOC(UESecurityCapabilities->
+                    eUTRAintegrityProtectionAlgorithms.size, sizeof(uint8_t));
+    UESecurityCapabilities->eUTRAintegrityProtectionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->eUTRAintegrityProtectionAlgorithms.buf[0] =
+        (0 << 1);
+    m_logger->debug("Security Capability finish");
+    ie = asn::New<ASN_NGAP_PathSwitchRequestIEs>();
+
+    ie->id = ASN_NGAP_ProtocolIE_ID_id_PDUSessionResourceToBeSwitchedDLList;
+    ie->criticality = ASN_NGAP_Criticality_ignore;
+    ie->value.present = ASN_NGAP_PathSwitchRequestIEs__value_PR_PDUSessionResourceToBeSwitchedDLList;
+    // std::vector<uint64_t> sessions{};
+    // PduSessionTree.enumerateByUe(ueId, sessions);
+    PDUSessionResourceToBeSwitchedDLList =
+        &ie->value.choice.PDUSessionResourceToBeSwitchedDLList;
+    m_logger->debug("PDUSessionResourceToBeSwitchedDLList 1");
+
+    auto & m_pduSessions = m_base->gtpTask->GetPduSessions();
+    auto iter = m_pduSessions.begin();//auto自动识别为迭代器类型unordered_map<int,string>::iterator
+    while (iter!= m_pduSessions.end())
+    {  
+        m_logger->debug("%d,%lu\n",iter->first,iter->first);
+        ++iter;  
+    }  
+    m_logger->debug("all pdu in m_pdusessions out\n");
+
+    
+    for (int psi : ue->pduSessions) {
+        m_logger->debug("psi : %d,%lu",psi,(uint64_t)psi);
+        auto *sessionItem = asn::New<ASN_NGAP_PDUSessionResourceToBeSwitchedDLItem_t>();
+        m_logger->debug("we have session_p");
+        uint64_t sessionInd = MakeSessionResInd(ueId, psi);
+        std::unique_ptr<nr::gnb::PduSessionResource> & session_p = m_pduSessions[sessionInd]; //这里有问题再看下
+        m_logger->debug("we have session_p");
+        m_logger->debug("ueid: %d",session_p->ueId);
+
+        sessionItem->pDUSessionID = static_cast<ASN_NGAP_PDUSessionID_t>(psi);
+        sessionItem->pathSwitchRequestTransfer = OCTET_STRING{};
+        transfer = &sessionItem->pathSwitchRequestTransfer;
+        if (transfer == NULL){
+            m_logger->debug("transfer is null");
+        } else {
+            m_logger->debug("transfer is not null");
+        }
+        ASN_NGAP_PathSwitchRequestTransfer_t message = ASN_NGAP_PathSwitchRequestTransfer_t{};
+        ASN_NGAP_GTPTunnel * gTPTunnel = asn::New<ASN_NGAP_GTPTunnel>();
+        message.dL_NGU_UP_TNLInformation.present = ASN_NGAP_UPTransportLayerInformation_PR_gTPTunnel;
+        message.dL_NGU_UP_TNLInformation.choice.gTPTunnel = gTPTunnel;
+        gTPTunnel->transportLayerAddress.size = 4;
+        gTPTunnel->transportLayerAddress.buf = (uint8_t *)CALLOC(gTPTunnel->transportLayerAddress.size, sizeof(uint8_t));
+        memcpy(gTPTunnel->transportLayerAddress.buf, target_ip.buf, 4);//critical:TODO:CHANGE HERE 
+        m_logger->debug("transportlayeraddress as following");
+        auto * address = gTPTunnel->transportLayerAddress.buf;
+        for (int i=0;i<4;i++){
+            m_logger->info("address: %d",*(address+i));
+        }   
+        m_logger->debug("store uptunnel address to sctp as following");
+        address = session_p->upTunnel.address.data();
+        for (int i=0;i<4;i++){
+            m_base->sctpServer->ul_ip[i] = *(address+i);
+            m_logger->info("address: %d",*(address+i));
+        }
+        // address = gTPTunnel->transportLayerAddress.buf;
+        // for (int i=0;i<4;i++){
+        //     m_logger->info("address: %d",*(address+i));
+        // }   
+        asn::SetOctetString4(gTPTunnel->gTP_TEID, (octet4)session_p->downTunnel.teid);
+        //gTPTunnel->gTP_TEID.size = sizeof(uint32_t);
+        
+        //gTPTunnel->gTP_TEID.buf = (uint8_t *)CALLOC(1, sizeof(uint32_t));
+        //memcpy(gTPTunnel->gTP_TEID.buf, &session_p->downTunnel.teid, sizeof(uint32_t));
+        m_logger->debug("memcpy gTP_TEID");
+        m_logger->info("Teid up:%lu",session_p->upTunnel.teid);
+        m_logger->info("Teid down:%lu",session_p->downTunnel.teid);
+        m_base->sctpServer->ul_teid = session_p->upTunnel.teid;
+        
+        // auto &qosList = session_p->qosFlows->list;
+        auto &list = session_p->qosFlows->list;
+        m_logger->debug("list length:%d",list.count);
+        for (int iQos = 0; iQos < list.count; iQos++)
+        {
+            m_logger->debug("%d",iQos);
+            ASN_NGAP_QosFlowAcceptedItem *qosFlowItem = asn::New<ASN_NGAP_QosFlowAcceptedItem>();
+            auto & item = list.array[iQos];
+            qosFlowItem->qosFlowIdentifier = item->qosFlowIdentifier;
+            m_logger->debug("%d",iQos);
+            asn::SequenceAdd(message.qosFlowAcceptedList, qosFlowItem);
+        }
+        m_logger->debug("finish list");
+
+        OctetString transfer_s = nr::gnb::ngap_encode::EncodeS(asn_DEF_ASN_NGAP_PathSwitchRequestTransfer, &message);
+        m_logger->debug("transefer_s success");
+
+        int size_tmp = transfer_s.length();
+        m_logger->debug("buffer size:%d",size_tmp);
+
+        uint8_t * data = transfer_s.data();
+        transfer->buf = (uint8_t*)CALLOC(size_tmp,sizeof(uint8_t));  
+        memcpy(transfer->buf,data,size_tmp * sizeof(uint8_t));
+        m_logger->debug("memcpy transfer");
+
+        transfer->size = size_tmp;
+        // message.qosFlowAcceptedList.list = session_p->qosFlows->list;
+        // // ul->qfi = static_cast<int>(session_p->qosFlows->list)
+
+            
+        // ogs_asn_ip_to_BIT_STRING(&ip, &gTPTunnel->transportLayerAddress);
+        // ogs_asn_uint32_to_OCTET_STRING(sess->gnb_n3_teid, &gTPTunnel->gTP_TEID);
+        asn::SequenceAdd(*PDUSessionResourceToBeSwitchedDLList, sessionItem);
+    }
+    // for (auto &session : sessions){
+    //     PDUSessionItem =
+    //         asn::New<ASN_NGAP_PDUSessionResourceToBeSwitchedDLItem_t>();
+    //     ASN_SEQUENCE_ADD(
+    //         &PDUSessionResourceToBeSwitchedDLList->list, PDUSessionItem);
+
+    //     PDUSessionItem->pDUSessionID = session ;
+
+    //     // n2smbuf = testngap_build_path_switch_request_trasfer(sess);
+    //     // transfer = &PDUSessionItem->pathSwitchRequestTransfer;
+
+    //     // transfer->size = n2smbuf->len;
+    //     // transfer->buf = CALLOC(transfer->size, sizeof(uint8_t));
+    //     // memcpy(transfer->buf, n2smbuf->data, transfer->size);
+    // }
+    ies.push_back(ie);
+    m_logger->debug("PDUSessionResourceToBeSwitchedDLList finish");
+
+    ASN_NGAP_NGAP_PDU *pdu = asn::ngap::NewMessagePdu<ASN_NGAP_PathSwitchRequest>(ies);
+    // m_logger->debug("attention ! the code add in 20230613 should be modify ! ");
+    // sendNgapUeAssociated(ueId, pdu); //TODO:attention ! you have to modify it 
+    return pdu;
+}
+
 ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequest(int ueId)
 {
     ASN_NGAP_AMF_UE_NGAP_ID_t *AMF_UE_NGAP_ID = NULL;
@@ -494,8 +707,8 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequest(int ueId)
         gTPTunnel->gTP_TEID.buf = (uint8_t *)CALLOC(1, sizeof(uint32_t));
         memcpy(gTPTunnel->gTP_TEID.buf, &session_p->upTunnel.teid, sizeof(uint32_t));
         m_logger->debug("memcpy gTP_TEID");
-        m_logger->info("Teid:%ul",&session_p->upTunnel.teid);
-        m_logger->info("Teid:%ul",&session_p->downTunnel.teid);
+        m_logger->info("Teid:%lu",session_p->upTunnel.teid);
+        m_logger->info("Teid:%lu",session_p->downTunnel.teid);
 
         // auto &qosList = session_p->qosFlows->list;
         auto &list = session_p->qosFlows->list;
@@ -550,7 +763,11 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequest(int ueId)
     m_logger->debug("PDUSessionResourceToBeSwitchedDLList finish");
 
     ASN_NGAP_NGAP_PDU *pdu = asn::ngap::NewMessagePdu<ASN_NGAP_PathSwitchRequest>(ies);
+    // m_logger->debug("attention ! the code add in 20230613 should be modify ! ");
+    // sendNgapUeAssociated(ueId, pdu); //TODO:attention ! you have to modify it 
     return pdu;
 }
+
+
 
 } // namespace nr::gnb

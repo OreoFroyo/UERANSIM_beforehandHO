@@ -50,7 +50,7 @@ inline NgapIdPair FindNgapIdPair(T *msg)
     if (ieRanUeNgapId)
         ranUeNgapId = ieRanUeNgapId->RAN_UE_NGAP_ID;
 
-    return NgapIdPair{amfUeNgapId, ranUeNgapId};
+    return NgapIdPair{amfUeNgapId, ranUeNgapId}; 
 }
 
 template <typename T>

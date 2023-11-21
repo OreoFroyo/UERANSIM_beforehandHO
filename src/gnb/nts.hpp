@@ -194,6 +194,8 @@ struct NmGnbRrcToNgap : NtsMessage
         RADIO_LINK_FAILURE,
         HANDOVER_REQUEST,
         SEND_PATHSWITCH,
+        SEND_FAKE_PATHSWITCH,
+        BEFOREHAND_HANDOVER,
     } present;
 
     // INITIAL_NAS_DELIVERY
@@ -254,7 +256,8 @@ struct NmGnbSctp : NtsMessage
         SEND_MESSAGE,
         UNHANDLED_NOTIFICATION,
         HANDOVER,
-        GNB_CONNECTION_REQUEST
+        GNB_CONNECTION_REQUEST,
+        BEFOREHAND_HANDOVER,
     } present;
 
     // CONNECTION_REQUEST
