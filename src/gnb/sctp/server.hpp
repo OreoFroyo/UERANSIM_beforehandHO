@@ -77,22 +77,32 @@ class mySctpHandler : public sctp::ISctpHandler
         // printf("printf onMessage:");
         // printf("ueSti:%ld\n",ueSti);
         // this->server->m_base->ngapTask->UeHandover(ueSti);
-        
-        
+        printf("length is : %d\n",length);
+        int beforehand;
+        int ueId;
         auto *data1 = new uint8_t[length];
         std::memcpy(data1, buffer, length);
         const char* data = (const char*)(char*)data1;
         printf("data:%s\n",data);
         cJSON* json = cJSON_Parse(data);
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if(error_ptr != NULL){
+            printf("Error before: %s\n", error_ptr);
+        }
         if (json){
+
             cJSON* item = cJSON_GetObjectItem(json,"ack");
             int ack = item->valueint;
 
-            cJSON* item2 = cJSON_GetObjectItem(json,"beforehand");
-            int beforehand = item2->valueint;
-            if(ack == 0){
+            cJSON* item2 = cJSON_GetObjectItem(json,"be");
+            if (item2!=NULL) {
+                beforehand = item2->valueint;
+            }
+            else
+                beforehand = 0;
+            if(ack == 0 && beforehand == 0){
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
-                int ueId = ueIdC->valueint;
+                ueId = ueIdC->valueint;
                 printf("UeId:%d\n",ueId);
                 // cJSON* buffer1 = cJSON_GetObjectItem(json, "buffer");
                 // unsigned char* bufferStr = (unsigned char*)buffer1->valuestring;
@@ -112,11 +122,10 @@ class mySctpHandler : public sctp::ISctpHandler
                 server->ul_ip[2] = ip2->valueint;
                 server->ul_ip[3] = ip3->valueint;
                 
-                cJSON *json = cJSON_CreateObject();
-                cJSON_AddNumberToObject(json, "ack", 1);
-                cJSON_AddNumberToObject(json, "beforehand", 1);
-                cJSON_AddNumberToObject(json, "ueId", ueId);
-                unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json);
+                cJSON *json2 = cJSON_CreateObject();
+                cJSON_AddNumberToObject(json2, "ack", 1);
+                cJSON_AddNumberToObject(json2, "ueId", ueId);
+                unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json2);
                 auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
                 msg->clientId = 10;
                 msg->stream = 1;
@@ -126,16 +135,20 @@ class mySctpHandler : public sctp::ISctpHandler
             }
             else if(beforehand == 1){
                 printf("beforehand == 1");
-                cJSON* ueIdc = cJSON_GetObjectItem(json, "ueId");
-                int ueId1 = ueIdc->valueint;
-                auto ue1 = server->m_base->ngapTask->getUectx(ueId1);
-                auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
-                w1->ueId = ue1->ctxId;
-                server->m_base->ngapTask->push(std::move(w1));
+                // cJSON* ueIdc = cJSON_GetObjectItem(json, "ueId");
+                // if (ueIdc!=NULL) {
+                //     ueId = ueIdc->valueint;
+                // } else {
+                //     ueId = 0;
+                // }  
+                // auto ue1 = server->m_base->ngapTask->getUectx(ueId);
+                // auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
+                // w1->ueId = ue1->ctxId;
+                // server->m_base->ngapTask->push(std::move(w1));
             }
             else if(ack == 1){
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
-                int ueId = ueIdC->valueint;
+                ueId = ueIdC->valueint;
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
                 auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
                 w->ueId = ue->ctxId;

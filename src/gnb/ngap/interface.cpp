@@ -379,7 +379,7 @@ void NgapTask::handleBeforehandHandoverMessage(int ueId)
     bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
     m_logger->info("length of buffer is : %d",encoded);
     cJSON *json = cJSON_CreateObject();
-    cJSON_AddNumberToObject(json, "beforehand", 0);
+    cJSON_AddNumberToObject(json, "beforehand", 1);
     cJSON_AddNumberToObject(json, "ueId", ueId);
     cJSON_AddNumberToObject(json, "ack", 0);
     cJSON_AddNumberToObject(json, "length", encoded);

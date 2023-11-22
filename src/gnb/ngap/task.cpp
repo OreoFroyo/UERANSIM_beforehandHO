@@ -7,7 +7,7 @@
 //
 
 #include "task.hpp"
-
+#include <utils/common.hpp>
 #include <sstream>
 #include <gnb/rls/task.hpp>
 #include <gnb/app/task.hpp>
@@ -316,16 +316,13 @@ void NgapTask::onLoop()
             bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
             m_logger->info("length of buffer is : %d",encoded);
             cJSON *json = cJSON_CreateObject();
-            cJSON_AddNumberToObject(json, "beforehand", 0);
+            
             cJSON_AddNumberToObject(json, "ueId", w.ueId);
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
-            cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
-            cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
-            cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
-            cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
-            cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
+            cJSON_AddNumberToObject(json, "be", 1);
             auto encodeStr = cJSON_PrintUnformatted(json);
+            
             sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
             sendXnapMessage(buffer,encoded);
             break;
