@@ -135,6 +135,21 @@ class mySctpHandler : public sctp::ISctpHandler
             }
             else if(beforehand == 1){
                 printf("beforehand == 1");
+                cJSON* uesti1 = cJSON_GetObjectItem(json, "uesti1");
+                cJSON* uesti2 = cJSON_GetObjectItem(json, "uesti2");
+                uint64_t uesti;
+                uint32_t uesti1c,uesti2c;
+                if (uesti1!=NULL && uesti2 !=NULL) {
+                    uesti1c = uesti1->valueint;
+                    uesti2c = uesti2->valueint;
+                    uesti = uesti1c << 32 + uesti2c;
+                } else {
+                    printf("canot read uesti!!!\n");
+                    return 
+                }  
+                auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
+                w1->ueId = m_base->rlsTask->getudp.findRlsPdu(uesti);;
+                server->m_base->ngapTask->push(std::move(w1));
                 // cJSON* ueIdc = cJSON_GetObjectItem(json, "ueId");
                 // if (ueIdc!=NULL) {
                 //     ueId = ueIdc->valueint;

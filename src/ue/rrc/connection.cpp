@@ -171,14 +171,17 @@ void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
     cellInfo.plmn = nextcell.sib1.plmn;
     cellInfo.tac = nextcell.sib1.tac;
     cellInfo.category = ECellCategory::SUITABLE_CELL;
-    
+
     m_base->shCtx.currentCell.set(cellInfo);
+    // 更新了当前的cellinfo
     auto w1 = std::make_unique<NmUeRrcToRls>(NmUeRrcToRls::ASSIGN_CURRENT_CELL);
     w1->cellId = cellId;
     m_base->rlsTask->push(std::move(w1));
+
     auto w2 = std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::ACTIVE_CELL_CHANGED);
     w2->previousTai = Tai{lastCell.sib1.plmn, lastCell.sib1.tac};
     m_base->nasTask->push(std::move(w2));
+    //通知了一些人
      // m_state = ERrcState::RRC_IDLE;
     auto *pdu = asn::New<ASN_RRC_UL_DCCH_Message>();
     pdu->message.present = ASN_RRC_UL_DCCH_MessageType_PR_c1;
@@ -190,10 +193,10 @@ void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
     reconfigComplete->criticalExtensions.present = ASN_RRC_RRCReconfigurationComplete__criticalExtensions_PR_rrcReconfigurationComplete;
 
     auto &ies = reconfigComplete->criticalExtensions.choice.rrcReconfigurationComplete = asn::New<ASN_RRC_RRCReconfigurationComplete_IEs>();
-    
-    sendRrcMessage(pdu);
 
-    m_base->nasTask->push(std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::RRC_CONNECTION_RECONFIGURATION));
+    sendRrcMessage(pdu);
+    //送回去了
+    m_base->nasTask->push(std::make_unique<NmUeRrcToNas>(NmUeRrcToNas::RRC_CONNECTION_RECONFIGURATION)); //没处理感觉
 }
 
 

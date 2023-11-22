@@ -316,8 +316,12 @@ void NgapTask::onLoop()
             bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
             m_logger->info("length of buffer is : %d",encoded);
             cJSON *json = cJSON_CreateObject();
-            
-            cJSON_AddNumberToObject(json, "ueId", w.ueId);
+            uint64_t uesti = m_base->rlsTask->getudp.findUeSti(w.ueId);
+            uint32_t uesti1,uesti2;
+            uesti1 = uesti >> 32;
+            uesti2 = (uesti << 32) >> 32; // only work for 32-bit length int
+            cJSON_AddNumberToObject(json, "uesti1", uesti1);
+            cJSON_AddNumberToObject(json, "uesti2", uesti2);
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
             cJSON_AddNumberToObject(json, "be", 1);

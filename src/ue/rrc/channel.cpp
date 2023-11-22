@@ -23,7 +23,7 @@ void UeRrcTask::handleDownlinkRrc(int cellId, rrc::RrcChannel channel, const Oct
 {
     if (!hasSignalToCell(cellId))
         return;
-
+    m_logger->info("current cellID:%d",cellId); //为了进一步修改，先打印出来看看
     switch (channel)
     {
     case rrc::RrcChannel::BCCH_BCH: {
@@ -173,7 +173,7 @@ void UeRrcTask::receiveRrcMessage(int cellId, ASN_RRC_DL_CCCH_Message *msg)
     }
 }
 
-void UeRrcTask::receiveRrcMessage(ASN_RRC_DL_DCCH_Message *msg)
+void UeRrcTask::receiveRrcMessage(ASN_RRC_DL_DCCH_Message *msg) 
 {
     if (msg->message.present != ASN_RRC_DL_DCCH_MessageType_PR_c1)
         return;
