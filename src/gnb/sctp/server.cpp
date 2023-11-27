@@ -114,6 +114,7 @@ namespace nr::gnb
                     uesti1c = uesti1->valueint;
                     uesti2c = uesti2->valueint;
                     uesti = uesti1c << 32 + uesti2c;
+                    printf("uesti: %llu",uesti);
                 } else {
                     printf("canot read uesti!!!\n");
                     return ;

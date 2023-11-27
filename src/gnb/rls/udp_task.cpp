@@ -105,10 +105,14 @@ int RlsUdpTask::findRlsPdu(uint64_t sti)
     // rls::RlsHeartBeatAck ack{m_sti};
     // ack.dbm = 50;
     // sendRlsPdu(addr, ack);
+    for (auto it : m_stiToUe) {
+        m_logger->info("%llu,%d",it.first,it.second);
+    }
     if (!m_stiToUe.count(sti)) {
-        m_logger->info("not found ue");
+        m_logger->info("not found ue %llu",sti);
     }
     int ueId = m_stiToUe[sti];
+    ueId = 1;
     return ueId;
 }
 
