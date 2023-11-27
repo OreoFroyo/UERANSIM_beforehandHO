@@ -157,14 +157,32 @@ void UeRrcTask::receiveRrcRelease(const ASN_RRC_RRCRelease &msg)
 void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
 {
     m_logger->debug("RRC RrcReconfiguration received");
-
-    int cellId = m_base->shCtx.currentCell.get().cellId;
-    auto & lastCell = m_cellDesc[cellId];
-    if (cellId == 1){
-        cellId = 2;
-    }else{
-        cellId = 1;
+    OCTET_STRING_t uesti_buf = msg.choice.criticalExtensionsFuture.rrcReconfiguration.secondaryCellGroup;
+    //todo:下一步改这里 
+    uint64_t uesti;
+    if (uesti_buf.size != 4){
+        m_logger->info("no enoughlength for ip, size is %d",ip.size);
+        return;
+    } else {
+        uesti = uesti_buf.buf[0]<<24+uesti_buf.buf[1]<<16+uesti_buf.buf[2]<<8+uesti_buf.buf[3];
     }
+    // if (uesti1!=NULL && uesti2 !=NULL) {
+    //     uesti1c = uesti1->valueint;
+    //     uesti2c = uesti2->valueint;
+    //     uesti = uesti1c << 32 + uesti2c;
+    // } else {
+    //     printf("canot read uesti!!!\n");
+    //     return 
+    // }  
+    // auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
+
+    int cellId = m_base->rlsTask->getudp()->findCell(uesti);
+    auto & lastCell = m_cellDesc[cellId];
+    // if (cellId == 1){
+    //     cellId = 2;
+    // }else{
+    //     cellId = 1;
+    // }
     ActiveCellInfo cellInfo = {};
     auto & nextcell = m_cellDesc[cellId];
     cellInfo.cellId = cellId;

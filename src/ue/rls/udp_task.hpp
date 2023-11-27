@@ -63,6 +63,7 @@ class RlsUdpTask : public NtsTask
   public:
     void initialize(NtsTask *ctlTask);
     void send(int cellId, const rls::RlsMessage &msg);
+    int findCell(uint64_t sti);
 };
 
 } // namespace nr::ue

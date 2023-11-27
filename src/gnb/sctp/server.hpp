@@ -148,7 +148,7 @@ class mySctpHandler : public sctp::ISctpHandler
                     return 
                 }  
                 auto w1 = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::SEND_FAKE_PATHSWITCH);
-                w1->ueId = m_base->rlsTask->getudp.findRlsPdu(uesti);;
+                w1->ueId = m_base->rlsTask->getudp.findRlsPdu(uesti);
                 server->m_base->ngapTask->push(std::move(w1));
                 // cJSON* ueIdc = cJSON_GetObjectItem(json, "ueId");
                 // if (ueIdc!=NULL) {
@@ -165,9 +165,11 @@ class mySctpHandler : public sctp::ISctpHandler
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 ueId = ueIdC->valueint;
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
-                auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
-                w->ueId = ue->ctxId;
-                server->m_base->rrcTask->push(std::move(w));
+                uint64_t sti = m_base->rlsTask->getudp.findUeSti(ueId);
+                // auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
+                // w->ueId = ue->ctxId;
+                // w->
+                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ueId,sti);
             }
         } else {
             printf("hh I'm in pdu store mode.\n");
