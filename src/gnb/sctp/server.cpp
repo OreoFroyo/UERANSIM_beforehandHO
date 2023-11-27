@@ -108,12 +108,16 @@ namespace nr::gnb
                 printf("beforehand == 1");
                 cJSON* uesti1 = cJSON_GetObjectItem(json, "uesti1");
                 cJSON* uesti2 = cJSON_GetObjectItem(json, "uesti2");
+                cJSON* uesti3 = cJSON_GetObjectItem(json, "uesti3");
+                cJSON* uesti4 = cJSON_GetObjectItem(json, "uesti4");
                 uint64_t uesti;
-                uint32_t uesti1c,uesti2c;
+                uint16_t uesti1c,uesti2c,uesti3c,uesti4c;
                 if (uesti1!=NULL && uesti2 !=NULL) {
                     uesti1c = uesti1->valueint;
                     uesti2c = uesti2->valueint;
-                    uesti = uesti1c << 32 + uesti2c;
+                    uesti3c = uesti3->valueint;
+                    uesti4c = uesti4->valueint;
+                    uesti = uesti1c << 48 + uesti2c <<32 + uesti3c <<16 +uesti4c ;
                     printf("uesti: %llu",uesti);
                 } else {
                     printf("canot read uesti!!!\n");
