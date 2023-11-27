@@ -100,6 +100,35 @@ void GnbRrcTask::releaseConnection(int ueId)
     m_ueCtx.erase(ueId);
 }
 
+
+
+void GnbRrcTask::exchangeRRCConnectionWithSti(int ueId,uint64_t sti)
+{
+    m_logger->info("Exchange RRC connection by use reconfigure for UE[%d]", ueId);
+
+    // Send RRC Release message
+    auto *pdu = asn::New<ASN_RRC_DL_DCCH_Message>();
+    pdu->message.present = ASN_RRC_DL_DCCH_MessageType_PR_c1;
+    pdu->message.choice.c1 = asn::NewFor(pdu->message.choice.c1);
+    pdu->message.choice.c1->present = ASN_RRC_DL_DCCH_MessageType__c1_PR_rrcReconfiguration;
+    auto &rrcReconfiguration = pdu->message.choice.c1->choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration>();
+    rrcReconfiguration->rrc_TransactionIdentifier = getNextTid();
+    rrcReconfiguration->criticalExtensions.present = ASN_RRC_RRCReconfiguration__criticalExtensions_PR_rrcReconfiguration;
+    rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
+    auto &rrcReconfiguration_IEs = rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
+    auto &gnb_ip_s = rrcReconfiguration_IEs->secondaryCellGroup = new OCTET_STRING();
+    gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+    gnb_ip.size = 4;
+    for (int i=0;i<gnb_ip.size;i++){
+        gnb_ip.buf[i] = gnb_ip[i];
+        m_logger->info("target_gnb_sti : %d",gnb_ip[i]);
+    }
+    sendRrcMessage(ueId, pdu);
+    asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);
+
+}
+
+
 void GnbRrcTask::exchangeRRCConnection(int ueId)
 {
     m_logger->info("Exchange RRC connection by use reconfigure for UE[%d]", ueId);
@@ -113,7 +142,14 @@ void GnbRrcTask::exchangeRRCConnection(int ueId)
     rrcReconfiguration->rrc_TransactionIdentifier = getNextTid();
     rrcReconfiguration->criticalExtensions.present = ASN_RRC_RRCReconfiguration__criticalExtensions_PR_rrcReconfiguration;
     rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
-    
+    // auto &rrcReconfiguration_IEs = rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
+    // auto &gnb_ip = rrcReconfiguration_IEs->secondaryCellGroup = new OCTET_STRING();
+    // gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+    // gnb_ip.size = 4;
+    // for (int i=0;i<gnb_ip.size;i++){
+    //     gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+    //     m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+    // }
     sendRrcMessage(ueId, pdu);
     asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);
 

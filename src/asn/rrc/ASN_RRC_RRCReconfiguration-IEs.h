@@ -27,7 +27,7 @@ struct ASN_RRC_RRCReconfiguration_v1530_IEs;
 /* ASN_RRC_RRCReconfiguration-IEs */
 typedef struct ASN_RRC_RRCReconfiguration_IEs {
 	struct ASN_RRC_RadioBearerConfig	*radioBearerConfig;	/* OPTIONAL */
-	OCTET_STRING_t	*secondaryCellGroup;	/* OPTIONAL */
+	OCTET_STRING_t	*secondaryCellGroup;	/* OPTIONAL */ 
 	struct ASN_RRC_MeasConfig	*measConfig;	/* OPTIONAL */
 	OCTET_STRING_t	*lateNonCriticalExtension;	/* OPTIONAL */
 	struct ASN_RRC_RRCReconfiguration_v1530_IEs	*nonCriticalExtension;	/* OPTIONAL */

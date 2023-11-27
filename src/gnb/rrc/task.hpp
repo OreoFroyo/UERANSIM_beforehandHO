@@ -112,7 +112,9 @@ class GnbRrcTask : public NtsTask
     void receiveRrcSetupComplete(int ueId, const ASN_RRC_RRCSetupComplete &msg);
     void receiveMeasurementReport(int ueId, const ASN_RRC_MeasurementReport &msg);
     void receiveRrcReconfigurationComplete(int ueId, const ASN_RRC_RRCReconfigurationComplete &msg);
-
+public:
+    /* Exchange RRC v2 in 20231123*/
+    void exchangeRRCConnectionWithSti(int ueId, uint64_t sti);
 };
 
 } // namespace nr::gnb

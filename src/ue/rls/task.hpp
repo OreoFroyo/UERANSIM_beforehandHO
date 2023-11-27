@@ -43,7 +43,7 @@ class UeRlsTask : public NtsTask
   public:
     explicit UeRlsTask(TaskBase *base);
     ~UeRlsTask() override = default;
-
+    RlsUdpTask * getudp(){return m_udpTask;};
   protected:
     void onStart() override;
     void onLoop() override;

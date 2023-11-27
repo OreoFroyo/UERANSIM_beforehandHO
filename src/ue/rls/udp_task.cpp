@@ -172,4 +172,9 @@ void RlsUdpTask::initialize(NtsTask *ctlTask)
     m_ctlTask = ctlTask;
 }
 
+
+int RlsUdpTask::findCell(uint64_t sti)
+{
+    return m_cells[sti].cellId;
+}
 } // namespace nr::ue
