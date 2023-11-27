@@ -42,8 +42,8 @@ class GnbRlsTask : public NtsTask
   public:
     explicit GnbRlsTask(TaskBase *base);
     ~GnbRlsTask() override = default;
-    RlsUdpTask * getudp(){return m_udpTask;};
 
+    RlsUdpTask * getudp(){return m_udpTask;};
   protected:
     void onStart() override;
     void onLoop() override;
