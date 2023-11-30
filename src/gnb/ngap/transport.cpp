@@ -159,6 +159,7 @@ void NgapTask::sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu)
 
     /* Insert UE-related information elements */
     {
+        m_logger->info("%lld",ue->amfUeNgapId);
         if (ue->amfUeNgapId > 0)
         {
             asn::ngap::AddProtocolIeIfUsable(
