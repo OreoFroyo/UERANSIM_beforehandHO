@@ -143,7 +143,8 @@ namespace nr::gnb
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
                 auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
                 w->ueId = ue->ctxId;
-                server->m_base->rrcTask->push(std::move(w));
+                uint64_t uesti = m_base->rlsTask->getudp()->findUeSti(w.ueId);
+                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,uesti);
             }
         } else {
             printf("hh I'm in pdu store mode.\n");

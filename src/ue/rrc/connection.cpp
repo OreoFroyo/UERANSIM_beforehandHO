@@ -160,11 +160,12 @@ void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
     OCTET_STRING_t uesti_buf = msg.choice.criticalExtensionsFuture.rrcReconfiguration.secondaryCellGroup;
     //todo:下一步改这里 
     uint64_t uesti;
-    if (uesti_buf.size != 4){
+    if (uesti_buf.size != 8){
         m_logger->info("no enoughlength for ip, size is %d",ip.size);
         return;
     } else {
-        uesti = uesti_buf.buf[0]<<24+uesti_buf.buf[1]<<16+uesti_buf.buf[2]<<8+uesti_buf.buf[3];
+        uesti = uesti_buf.buf[0]<<56+uesti_buf.buf[1]<<48+uesti_buf.buf[2]<<40+uesti_buf.buf[3]<<32+
+        uesti_buf.buf[4]<<24+uesti_buf.buf[5]<<16+uesti_buf.buf[6]<<8+uesti_buf.buf[7];
     }
     // if (uesti1!=NULL && uesti2 !=NULL) {
     //     uesti1c = uesti1->valueint;

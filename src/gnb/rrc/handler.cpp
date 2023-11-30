@@ -116,12 +116,13 @@ void GnbRrcTask::exchangeRRCConnectionWithSti(int ueId,uint64_t sti)
     rrcReconfiguration->criticalExtensions.present = ASN_RRC_RRCReconfiguration__criticalExtensions_PR_rrcReconfiguration;
     rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
     auto &rrcReconfiguration_IEs = rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration = asn::New<ASN_RRC_RRCReconfiguration_IEs>();
-    auto &gnb_ip_s = rrcReconfiguration_IEs->secondaryCellGroup = new OCTET_STRING();
-    gnb_ip.buf = (uint8_t *)CALLOC(4,1);
-    gnb_ip.size = 4;
-    for (int i=0;i<gnb_ip.size;i++){
-        gnb_ip.buf[i] = gnb_ip[i];
-        m_logger->info("target_gnb_sti : %d",gnb_ip[i]);
+    auto *gnb_ip_s = rrcReconfiguration_IEs->secondaryCellGroup = new OCTET_STRING();
+    gnb_ip_s->buf = (uint8_t *)CALLOC(8,1);
+    gnb_ip_s->size = 8;
+
+    for (int i=0;i<gnb_ip->size;i++){
+        gnb_ip_s->buf[i] = sti << 8*i >> 56;
+        m_logger->info("target_gnb_sti : %d",gnb_ip_s[i]);
     }
     sendRrcMessage(ueId, pdu);
     asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);
