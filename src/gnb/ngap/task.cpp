@@ -317,12 +317,15 @@ void NgapTask::onLoop()
             m_logger->info("length of buffer is : %d",encoded);
             cJSON *json = cJSON_CreateObject();
             uint64_t uesti = m_base->rlsTask->getudp()->findUeSti(w.ueId);
-            m_logger->info("uesti is : %llu",uesti);
-            uint32_t uesti1,uesti2;
-            uesti1 = uesti >> 32;
-            uesti2 = (uesti << 32) >> 32; // only work for 32-bit length int
+            uint16_t uesti1,uesti2,uesti3,uesti4;
+            uesti1 = uesti >> 48;
+            uesti2 = (uesti << 48) >> 48; // only work for 32-bit length int
+            uesti3 = (uesti << 32) >> 48; // only work for 32-bit length int
+            uesti4 = (uesti << 16) >> 48; // only work for 32-bit length int
             cJSON_AddNumberToObject(json, "uesti1", uesti1);
             cJSON_AddNumberToObject(json, "uesti2", uesti2);
+            cJSON_AddNumberToObject(json, "uesti2", uesti3);
+            cJSON_AddNumberToObject(json, "uesti2", uesti4);
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
             cJSON_AddNumberToObject(json, "be", 1);
