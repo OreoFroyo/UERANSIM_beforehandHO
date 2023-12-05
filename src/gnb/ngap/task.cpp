@@ -324,8 +324,8 @@ void NgapTask::onLoop()
             uesti4 = (uesti << 16) >> 48; // only work for 32-bit length int
             cJSON_AddNumberToObject(json, "uesti1", uesti1);
             cJSON_AddNumberToObject(json, "uesti2", uesti2);
-            cJSON_AddNumberToObject(json, "uesti2", uesti3);
-            cJSON_AddNumberToObject(json, "uesti2", uesti4);
+            cJSON_AddNumberToObject(json, "uesti3", uesti3);
+            cJSON_AddNumberToObject(json, "uesti4", uesti4);
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
             cJSON_AddNumberToObject(json, "be", 1);

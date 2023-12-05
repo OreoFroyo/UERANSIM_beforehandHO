@@ -22,6 +22,7 @@
 #include <asn/rrc/ASN_RRC_RRCSetupRequest.h>
 #include <asn/rrc/ASN_RRC_RRCReconfigurationComplete.h>
 #include <asn/rrc/ASN_RRC_RRCReconfiguration.h>
+#include <asn/rrc/ASN_RRC_RRCReconfiguration-IEs.h>
 #include <asn/rrc/ASN_RRC_RRCReconfigurationComplete-IEs.h>
 
 namespace nr::ue
@@ -157,15 +158,15 @@ void UeRrcTask::receiveRrcRelease(const ASN_RRC_RRCRelease &msg)
 void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
 {
     m_logger->debug("RRC RrcReconfiguration received");
-    OCTET_STRING_t uesti_buf = msg.choice.criticalExtensionsFuture.rrcReconfiguration.secondaryCellGroup;
+    OCTET_STRING_t* uesti_buf = msg.criticalExtensions.choice.rrcReconfiguration->secondaryCellGroup;
     //todo:下一步改这里 
     uint64_t uesti;
-    if (uesti_buf.size != 8){
-        m_logger->info("no enoughlength for ip, size is %d",ip.size);
+    if (uesti_buf->size != 8){
+        m_logger->info("no enoughlength for ip, size is %d",uesti_buf->size);
         return;
     } else {
-        uesti = uesti_buf.buf[0]<<56+uesti_buf.buf[1]<<48+uesti_buf.buf[2]<<40+uesti_buf.buf[3]<<32+
-        uesti_buf.buf[4]<<24+uesti_buf.buf[5]<<16+uesti_buf.buf[6]<<8+uesti_buf.buf[7];
+        uesti = ((uint64_t)(uesti_buf->buf[0])<<56) + ((uint64_t)(uesti_buf->buf[1])<<48)+ ((uint64_t)(uesti_buf->buf[2])<<40) + ((uint64_t)(uesti_buf->buf[3])<<32) +
+        ((uint64_t)(uesti_buf->buf[4])<<24) + ((uint64_t)(uesti_buf->buf[5])<<16) +((uint64_t)(uesti_buf->buf[6])<<8)+((uint64_t)(uesti_buf->buf[7]));
     }
     // if (uesti1!=NULL && uesti2 !=NULL) {
     //     uesti1c = uesti1->valueint;
