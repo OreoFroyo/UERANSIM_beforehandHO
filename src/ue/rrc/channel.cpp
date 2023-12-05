@@ -23,7 +23,7 @@ void UeRrcTask::handleDownlinkRrc(int cellId, rrc::RrcChannel channel, const Oct
 {
     if (!hasSignalToCell(cellId))
         return;
-    m_logger->info("current cellID:%d",cellId); //为了进一步修改，先打印出来看看
+    // m_logger->info("current cellID:%d",cellId); //为了进一步修改，先打印出来看看
     switch (channel)
     {
     case rrc::RrcChannel::BCCH_BCH: {
