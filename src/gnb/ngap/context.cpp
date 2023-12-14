@@ -366,7 +366,6 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp(int ueId, OCTET_S
     auto *ue = findUeContext(ueId);
     if (ue == nullptr)
         m_logger->info("ue is null");
-        return;
 
     std::vector<ASN_NGAP_PathSwitchRequestIEs *> ies;
 
@@ -387,7 +386,7 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp(int ueId, OCTET_S
     for (int i=0;i<AMF_UE_NGAP_ID->size;i++){
         m_logger->debug("%d",AMF_UE_NGAP_ID->buf[i]);
     }
-    m_logger->debug("SourceAMF_UE_NGAP_ID :show true size %lld",*ie->value.choice.AMF_UE_NGAP_ID.size);
+    m_logger->debug("SourceAMF_UE_NGAP_ID :show true size %lld",ie->value.choice.AMF_UE_NGAP_ID.size);
 
     // ie->value.choice.RAN_UE_NGAP_ID = *id;
     ies.push_back(ie);
