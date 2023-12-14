@@ -143,9 +143,7 @@ namespace nr::gnb
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 ueId = ueIdC->valueint;
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
-                auto w = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::EXCHANGE_RRC);
-                w->ueId = ue->ctxId;
-                uint64_t uesti = m_base->rlsTask->getudp()->findUeSti(w.ueId);
+                uint64_t uesti = server->m_base->rlsTask->getudp()->findUeSti(ue->ctxId);
                 server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,uesti);
             }
         } else {
