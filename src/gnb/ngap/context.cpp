@@ -584,7 +584,6 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp_BH(int ueId, OCTE
     auto *ue = findUeContext(ueId);
     if (ue == nullptr)
         m_logger->info("ue is null");
-        return;
 
     std::vector<ASN_NGAP_PathSwitchRequestIEs *> ies;
 
@@ -606,7 +605,6 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp_BH(int ueId, OCTE
 
 
 
-    auto *ie = asn::New<ASN_NGAP_PathSwitchRequestIEs>();
     ie->id = ASN_NGAP_ProtocolIE_ID_id_SourceAMF_UE_NGAP_ID;
     ie->criticality = ASN_NGAP_Criticality_reject;
     ie->value.present = ASN_NGAP_PathSwitchRequestIEs__value_PR_AMF_UE_NGAP_ID;
@@ -618,10 +616,10 @@ ASN_NGAP_NGAP_PDU* NgapTask::sendPathSwitchRequestwithTargetIp_BH(int ueId, OCTE
     // *id = ue->amfUeNgapId;
     m_logger->debug("SourceAMF_UE_NGAP_ID :size %llu",AMF_UE_NGAP_ID->size);
 
-    for (int i=0;i<AMF_UE_NGAP_ID->size;i++){
+    for (int i=0;i<int(AMF_UE_NGAP_ID->size);i++){
         m_logger->debug("%d",AMF_UE_NGAP_ID->buf[i]);
     }
-    m_logger->debug("SourceAMF_UE_NGAP_ID :show true size %lld",*ie->value.choice.AMF_UE_NGAP_ID.size);
+    m_logger->debug("SourceAMF_UE_NGAP_ID :show true size %lld",ie->value.choice.AMF_UE_NGAP_ID.size);
 
     // ie->value.choice.RAN_UE_NGAP_ID = *id;
     ies.push_back(ie);
