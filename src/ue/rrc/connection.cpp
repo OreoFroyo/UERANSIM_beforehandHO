@@ -167,6 +167,7 @@ void UeRrcTask::receiveRrcReconfiguration(const ASN_RRC_RRCReconfiguration &msg)
     } else {
         uesti = ((uint64_t)(uesti_buf->buf[0])<<56) + ((uint64_t)(uesti_buf->buf[1])<<48)+ ((uint64_t)(uesti_buf->buf[2])<<40) + ((uint64_t)(uesti_buf->buf[3])<<32) +
         ((uint64_t)(uesti_buf->buf[4])<<24) + ((uint64_t)(uesti_buf->buf[5])<<16) +((uint64_t)(uesti_buf->buf[6])<<8)+((uint64_t)(uesti_buf->buf[7]));
+        m_logger->info("uesti:%llx",uesti);
     }
     // if (uesti1!=NULL && uesti2 !=NULL) {
     //     uesti1c = uesti1->valueint;
