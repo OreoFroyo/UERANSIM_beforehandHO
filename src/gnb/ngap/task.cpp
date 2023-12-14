@@ -135,7 +135,7 @@ void NgapTask::onLoop()
                     setupPduSessionResource(ueCtx, resource);
                 }
             }
-            pdu->choice.initiatingMessage->procedureCode = 18; //location report
+            // pdu->choice.initiatingMessage->procedureCode = 18; //location report
             sendNgapUeAssociated(w.ueId, pdu);
             break;
         }
@@ -310,7 +310,7 @@ void NgapTask::onLoop()
                 gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
                 m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
             }
-            auto *pdu = sendPathSwitchRequestwithTargetIp(w.ueId,gnb_ip);
+            auto *pdu = sendPathSwitchRequestwithTargetIp_BH(w.ueId,gnb_ip);
             ssize_t encoded;
             uint8_t *buffer;
             bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
@@ -318,10 +318,13 @@ void NgapTask::onLoop()
             cJSON *json = cJSON_CreateObject();
             uint64_t uesti = m_base->rlsTask->getudp()->findUeSti(w.ueId);
             uint16_t uesti1,uesti2,uesti3,uesti4;
+            m_logger->info("uesti is : %llu",uesti);
             uesti1 = uesti >> 48;
-            uesti2 = (uesti << 48) >> 48; // only work for 32-bit length int
+            uesti2 = (uesti << 16) >> 48; // only work for 32-bit length int
             uesti3 = (uesti << 32) >> 48; // only work for 32-bit length int
-            uesti4 = (uesti << 16) >> 48; // only work for 32-bit length int
+
+            uesti4 = (uesti << 48) >> 48; // only work for 32-bit length int
+
             cJSON_AddNumberToObject(json, "uesti1", uesti1);
             cJSON_AddNumberToObject(json, "uesti2", uesti2);
             cJSON_AddNumberToObject(json, "uesti3", uesti3);
@@ -353,9 +356,9 @@ void NgapTask::onLoop()
         case NmGnbSctp::ASSOCIATION_SHUTDOWN:
             handleAssociationShutdown(w.clientId);
             break;
-        case NmGnbSctp::BEFOREHAND_HANDOVER:
-            handleBeforehandHandoverMessage(w.clientId);
-            break;
+        // case NmGnbSctp::BEFOREHAND_HANDOVER:
+        //     handleBeforehandHandoverMessage(w.clientId);
+        //     break;
         default:
             m_logger->info("right way");
             m_logger->unhandledNts(*msg);

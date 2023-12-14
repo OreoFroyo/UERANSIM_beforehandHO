@@ -113,11 +113,13 @@ namespace nr::gnb
                 uint64_t uesti;
                 uint16_t uesti1c,uesti2c,uesti3c,uesti4c;
                 if (uesti1!=NULL && uesti2 !=NULL) {
+                    
                     uesti1c = uesti1->valueint;
                     uesti2c = uesti2->valueint;
                     uesti3c = uesti3->valueint;
                     uesti4c = uesti4->valueint;
-                    uesti = uesti1c << 48 + uesti2c <<32 + uesti3c <<16 +uesti4c ;
+                    printf("uesti_c:%u,%u,%u,%u",uesti1c,uesti2c,uesti3c,uesti4c);
+                    uesti = ((unsigned long long)uesti1c << 48) + ((unsigned long long)uesti2c <<32) + ((unsigned long long)uesti3c <<16) +(unsigned long long)uesti4c;
                     printf("uesti: %llu",uesti);
                 } else {
                     printf("canot read uesti!!!\n");

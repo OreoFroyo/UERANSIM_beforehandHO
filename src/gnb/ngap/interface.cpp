@@ -363,35 +363,35 @@ void NgapTask::receiveOverloadStop(int amfId, ASN_NGAP_OverloadStop *msg)
     // TODO
 }
 
-void NgapTask::handleBeforehandHandoverMessage(int ueId)
-{
-    m_logger->info("NgapTask::handleBeforehandHandoverMessage");// auto  
-    OCTET_STRING gnb_ip = {};
-    gnb_ip.buf = (uint8_t *)CALLOC(4,1);
-    gnb_ip.size = 4;
-    for (int i=0;i<gnb_ip.size;i++){
-        gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
-        m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
-    }
-    auto *pdu = sendPathSwitchRequestwithTargetIp(ueId,gnb_ip);
-    ssize_t encoded;
-    uint8_t *buffer;
-    bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
-    m_logger->info("length of buffer is : %d",encoded);
-    cJSON *json = cJSON_CreateObject();
-    cJSON_AddNumberToObject(json, "beforehand", 1);
-    cJSON_AddNumberToObject(json, "ueId", ueId);
-    cJSON_AddNumberToObject(json, "ack", 0);
-    cJSON_AddNumberToObject(json, "length", encoded);
-    cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
-    cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
-    cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
-    cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
-    cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
-    auto encodeStr = cJSON_PrintUnformatted(json);
-    sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
-    sendXnapMessage(buffer,encoded);
-}
+// void NgapTask::handleBeforehandHandoverMessage(int ueId)
+// {
+//     m_logger->info("NgapTask::handleBeforehandHandoverMessage");// auto  
+//     OCTET_STRING gnb_ip = {};
+//     gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+//     gnb_ip.size = 4;
+//     for (int i=0;i<gnb_ip.size;i++){
+//         gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+//         m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+//     }
+//     auto *pdu = sendPathSwitchRequestwithTargetIp_BH(ueId,gnb_ip);
+//     ssize_t encoded;
+//     uint8_t *buffer;
+//     bool flag = ngap_encode::Encode(asn_DEF_ASN_NGAP_NGAP_PDU, pdu, encoded, buffer);
+//     m_logger->info("length of buffer is : %d",encoded);
+//     cJSON *json = cJSON_CreateObject();
+//     cJSON_AddNumberToObject(json, "beforehand", 1);
+//     cJSON_AddNumberToObject(json, "ueId", ueId);
+//     cJSON_AddNumberToObject(json, "ack", 0);
+//     cJSON_AddNumberToObject(json, "length", encoded);
+//     cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+//     cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+//     cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+//     cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+//     cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
+//     auto encodeStr = cJSON_PrintUnformatted(json);
+//     sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+//     sendXnapMessage(buffer,encoded);
+// }
 
 void NgapTask::receivePathSwitchRequestAck(int amfId, ASN_NGAP_PathSwitchRequestAcknowledge *msg)
 {

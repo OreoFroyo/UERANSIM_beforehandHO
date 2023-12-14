@@ -66,6 +66,7 @@ class NgapTask : public NtsTask
     void UeHandover(uint64_t sti);
     ASN_NGAP_NGAP_PDU* sendPathSwitchRequest(int ueId);
     ASN_NGAP_NGAP_PDU* sendPathSwitchRequestwithTargetIp(int ueId,OCTET_STRING target_ip);
+    ASN_NGAP_NGAP_PDU* sendPathSwitchRequestwithTargetIp_BH(int ueId,OCTET_STRING target_ip);
     NgapUeContext* getUectx(int ueId){return m_ueCtx[ueId];};
     
   protected:
@@ -133,7 +134,7 @@ class NgapTask : public NtsTask
     /* Radio resource control */
     void handleRadioLinkFailure(int ueId);
     void receivePaging(int amfId, ASN_NGAP_Paging *msg);
-    void handleBeforehandHandoverMessage(int ueId);
+    // void handleBeforehandHandoverMessage(int ueId);
 
 
 
