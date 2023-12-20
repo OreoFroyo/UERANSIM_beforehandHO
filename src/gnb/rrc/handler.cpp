@@ -121,8 +121,8 @@ void GnbRrcTask::exchangeRRCConnectionWithSti(int ueId,uint64_t sti)
     gnb_ip_s->size = 8;
 
     for (int i=0;i<gnb_ip_s->size;i++){
-        gnb_ip_s->buf[i] = sti << 8*i >> 56;
-        m_logger->info("target_gnb_sti : %d",gnb_ip_s[i]);
+        gnb_ip_s->buf[i] = sti << (8*i) >> 56;
+        m_logger->info("target_gnb_sti : %d",gnb_ip_s->buf[i]);
     }
     sendRrcMessage(ueId, pdu);
     asn::Free(asn_DEF_ASN_RRC_DL_DCCH_Message, pdu);

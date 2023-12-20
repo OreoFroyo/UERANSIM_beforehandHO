@@ -143,8 +143,9 @@ namespace nr::gnb
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 ueId = ueIdC->valueint;
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
-                uint64_t uesti = server->m_base->rlsTask->getudp()->findUeSti(ue->ctxId);
-                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,uesti);
+
+                uint64_t sti = server->m_base->rlsTask->getudp()->findMySti();
+                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,sti);
             }
         } else {
             printf("hh I'm in pdu store mode.\n");
