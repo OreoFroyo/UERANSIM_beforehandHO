@@ -92,15 +92,27 @@ namespace nr::gnb
                 server->ul_ip[1] = ip1->valueint;
                 server->ul_ip[2] = ip2->valueint;
                 server->ul_ip[3] = ip3->valueint;
-                
+                uint64_t uesti = server->m_base->rlsTask->getudp()->findMySti(); // not uesti actually, it's my sti
+                uint16_t uesti1,uesti2,uesti3,uesti4;
+                m_logger->info("uesti is : %llu",uesti);
+                uesti1 = uesti >> 48;
+                uesti2 = (uesti << 16) >> 48; // only work for 32-bit length int
+                uesti3 = (uesti << 32) >> 48; // only work for 32-bit length int
+
+                uesti4 = (uesti << 48) >> 48; // only work for 32-bit length int
                 cJSON *json2 = cJSON_CreateObject();
                 cJSON_AddNumberToObject(json2, "ack", 1);
                 cJSON_AddNumberToObject(json2, "ueId", ueId);
+                cJSON_AddNumberToObject(json, "uesti1", uesti1);
+                cJSON_AddNumberToObject(json, "uesti2", uesti2);
+                cJSON_AddNumberToObject(json, "uesti3", uesti3);
+                cJSON_AddNumberToObject(json, "uesti4", uesti4);
                 unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json2);
                 auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
                 msg->clientId = 10;
                 msg->stream = 1;
                 msg->buffer = UniqueBuffer{encodeStr, strlen((char *)encodeStr)};
+                
                 printf("send buffer: %s\n",(char *)msg->buffer.data());
                 server->m_base->sctpTask->push(std::move(msg));
             }
@@ -143,9 +155,26 @@ namespace nr::gnb
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 ueId = ueIdC->valueint;
                 auto ue = server->m_base->ngapTask->getUectx(ueId);
-
-                uint64_t sti = server->m_base->rlsTask->getudp()->findMySti();
-                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,sti);
+                cJSON* uesti1 = cJSON_GetObjectItem(json, "uesti1");
+                cJSON* uesti2 = cJSON_GetObjectItem(json, "uesti2");
+                cJSON* uesti3 = cJSON_GetObjectItem(json, "uesti3");
+                cJSON* uesti4 = cJSON_GetObjectItem(json, "uesti4");
+                uint64_t uesti;
+                uint16_t uesti1c,uesti2c,uesti3c,uesti4c;
+                if (uesti1!=NULL && uesti2 !=NULL) {
+                    
+                    uesti1c = uesti1->valueint;
+                    uesti2c = uesti2->valueint;
+                    uesti3c = uesti3->valueint;
+                    uesti4c = uesti4->valueint;
+                    printf("uesti_c:%u,%u,%u,%u",uesti1c,uesti2c,uesti3c,uesti4c);
+                    uesti = ((unsigned long long)uesti1c << 48) + ((unsigned long long)uesti2c <<32) + ((unsigned long long)uesti3c <<16) +(unsigned long long)uesti4c;
+                    printf("uesti: %llu",uesti);
+                } else {
+                    printf("canot read uesti!!!\n");
+                    return ;
+                }  
+                server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,uesti);
             }
         } else {
             printf("hh I'm in pdu store mode.\n");
