@@ -94,7 +94,6 @@ namespace nr::gnb
                 server->ul_ip[3] = ip3->valueint;
                 uint64_t uesti = server->m_base->rlsTask->getudp()->findMySti(); // not uesti actually, it's my sti
                 uint16_t uesti1,uesti2,uesti3,uesti4;
-                m_logger->info("uesti is : %llu",uesti);
                 uesti1 = uesti >> 48;
                 uesti2 = (uesti << 16) >> 48; // only work for 32-bit length int
                 uesti3 = (uesti << 32) >> 48; // only work for 32-bit length int
@@ -103,10 +102,10 @@ namespace nr::gnb
                 cJSON *json2 = cJSON_CreateObject();
                 cJSON_AddNumberToObject(json2, "ack", 1);
                 cJSON_AddNumberToObject(json2, "ueId", ueId);
-                cJSON_AddNumberToObject(json, "uesti1", uesti1);
-                cJSON_AddNumberToObject(json, "uesti2", uesti2);
-                cJSON_AddNumberToObject(json, "uesti3", uesti3);
-                cJSON_AddNumberToObject(json, "uesti4", uesti4);
+                cJSON_AddNumberToObject(json2, "uesti1", uesti1);
+                cJSON_AddNumberToObject(json2, "uesti2", uesti2);
+                cJSON_AddNumberToObject(json2, "uesti3", uesti3);
+                cJSON_AddNumberToObject(json2, "uesti4", uesti4);
                 unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json2);
                 auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
                 msg->clientId = 10;
