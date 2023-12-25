@@ -123,7 +123,7 @@ class UeRrcTask : public NtsTask
 
     /* NAS Transport */
     void deliverUplinkNas(uint32_t pduId, OctetString &&nasPdu);
-    void deliverMeasurementPeport(uint32_t pduId, OctetString &&nasPdu);
+    void deliverMeasurementReport(uint32_t pduId, OctetString &&nasPdu);
     void receiveDownlinkInformationTransfer(const ASN_RRC_DLInformationTransfer &msg);
 
     /* Connection Control */

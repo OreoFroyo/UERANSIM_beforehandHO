@@ -25,7 +25,7 @@
 namespace nr::ue
 {
 
-void UeRrcTask::deliverMeasurementPeport(uint32_t pduId, OctetString &&nasPdu)
+void UeRrcTask::deliverMeasurementReport(uint32_t pduId, OctetString &&nasPdu)
 {
     if (!m_base->shCtx.currentCell.get<bool>([](auto &value) { return value.hasValue(); }))
     {
