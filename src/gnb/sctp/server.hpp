@@ -36,6 +36,9 @@ class mySctpHandler : public sctp::ISctpHandler
     private:
         int clientId;
         GnbSctpServer *const server;
+    
+    public:
+        extern int B_HO = 0;
         
     public:
         mySctpHandler(GnbSctpServer *const server, int clientId) : server(server), clientId(clientId)

@@ -196,6 +196,7 @@ struct NmGnbRrcToNgap : NtsMessage
         SEND_PATHSWITCH,
         SEND_FAKE_PATHSWITCH,
         BEFOREHAND_HANDOVER,
+        BEFOREHAND_HO_FROM_UE,
     } present;
 
     // INITIAL_NAS_DELIVERY

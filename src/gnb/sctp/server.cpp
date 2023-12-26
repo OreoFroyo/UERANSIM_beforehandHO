@@ -71,6 +71,12 @@ namespace nr::gnb
             }
             else
                 beforehand = 0;
+            
+            cJSON* BHO = cJSON_GetObjectItem(json,"B_HO");
+            if(BHO != NULL){
+                mySctpHandler::B_HO = BHO->valueint;
+            }
+
             if(ack == 0 && beforehand == 0){
                 cJSON* ueIdC = cJSON_GetObjectItem(json, "ueId");
                 ueId = ueIdC->valueint;

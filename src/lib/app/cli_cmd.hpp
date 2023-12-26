@@ -31,7 +31,7 @@ struct GnbCliCommand
         UE_RELEASE_REQ,
         XNAP_CONNECTION,
         PATH_SWITCH_REQ,
-        BEFOREHAND_HANDOVER,
+        BEFOREHAND_HO_GNB,
     } present;
 
     // AMF_INFO
@@ -66,6 +66,7 @@ struct UeCliCommand
         RLS_STATE,
         COVERAGE,
         HANDOVER,
+        BEFOREHAND_HO_UE,
     } present;
 
     // DE_REGISTER

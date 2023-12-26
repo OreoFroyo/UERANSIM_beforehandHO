@@ -204,7 +204,7 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
         }
         break;
     }
-    case app::GnbCliCommand::BEFOREHAND_HANDOVER: {
+    case app::GnbCliCommand::BEFOREHAND_HO_GNB: {
         auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::BEFOREHAND_HANDOVER);
         if (m_base->ngapTask->m_ueCtx.count(msg.cmd->ueId) == 0)
             sendError(msg.address, "UE not found with given ID");
@@ -212,7 +212,7 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
             auto ue = m_base->ngapTask->m_ueCtx[msg.cmd->ueId];
             w->ueId = ue->ctxId;
             m_base->ngapTask->push(std::move(w));
-            sendResult(msg.address,"Beforehand Handover Message Send Successfully");
+            sendResult(msg.address,"Beforehand-HO-toCore Signal Send Successfully");
         }
 
         break;

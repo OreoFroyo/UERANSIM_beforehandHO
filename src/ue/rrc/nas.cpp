@@ -83,6 +83,45 @@ void UeRrcTask::deliverMeasurementPeport(uint32_t pduId, OctetString &&nasPdu)
     asn::Free(asn_DEF_ASN_RRC_UL_DCCH_Message, pdu);
 }
 
+void UeRrcTask::deliverMeasurementReportForbeforehandHO()
+{
+    auto *pdu = asn::New<ASN_RRC_UL_DCCH_Message>();
+    pdu->message.present = ASN_RRC_UL_DCCH_MessageType_PR_c1;
+    pdu->message.choice.c1 =
+        asn::New<ASN_RRC_UL_DCCH_MessageType::ASN_RRC_UL_DCCH_MessageType_u::ASN_RRC_UL_DCCH_MessageType__c1>();
+    pdu->message.choice.c1->present = ASN_RRC_UL_DCCH_MessageType__c1_PR_measurementReport;
+    pdu->message.choice.c1->choice.measurementReport = asn::New<ASN_RRC_MeasurementReport>();
+
+    auto &c1 = pdu->message.choice.c1->choice.measurementReport->criticalExtensions;
+    c1.present = ASN_RRC_MeasurementReport__criticalExtensions_PR_measurementReport;
+    c1.choice.measurementReport = asn::New<ASN_RRC_MeasurementReport_IEs>();
+    //c1.choice.measurementReport->measResults = asn::New<ASN_RRC_MeasResults_t>();
+    c1.choice.measurementReport->measResults.measId = 88;
+    c1.choice.measurementReport->measResults.measResultNeighCells = asn::New<ASN_RRC_MeasResults::ASN_RRC_MeasResults__measResultNeighCells>();
+    //c1.choice.measurementReport->measResults.measResultNeighCells->choice.measResultListEUTRA = asn::New<ASN_RRC_MeasResultListEUTRA>();
+    c1.choice.measurementReport->measResults.measResultNeighCells->choice.measResultListNR = asn::New<ASN_RRC_MeasResultListNR>();
+    c1.choice.measurementReport->measResults.measResultNeighCells->present = ASN_RRC_MeasResults__measResultNeighCells_PR_measResultListNR;
+    c1.choice.measurementReport->measResults.measResultServingMOList = *asn::New<ASN_RRC_MeasResultServMOList_t>();
+    ASN_RRC_MeasResultServMO *measResultServMO1 = asn::New<ASN_RRC_MeasResultServMO>();
+    measResultServMO1->servCellId = 2;
+    measResultServMO1->measResultServingCell = *asn::New<ASN_RRC_MeasResultNR_t>();
+    measResultServMO1->measResultServingCell.measResult = *asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult>();
+    measResultServMO1->measResultServingCell.measResult.cellResults = *asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult::ASN_RRC_MeasResultNR__measResult__cellResults>();
+    measResultServMO1->measResultServingCell.measResult.rsIndexResults = asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult::ASN_RRC_MeasResultNR__measResult__rsIndexResults>();
+    measResultServMO1->measResultServingCell.ext1 = asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__ext1>();
+    ASN_RRC_MeasResultNR_t *nrElement = asn::New<ASN_RRC_MeasResultNR_t>();
+    nrElement->measResult = *asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult>();
+    nrElement->measResult.cellResults = *asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult::ASN_RRC_MeasResultNR__measResult__cellResults>();
+    nrElement->measResult.rsIndexResults = asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__measResult::ASN_RRC_MeasResultNR__measResult__rsIndexResults>();
+    nrElement->ext1 = asn::New<ASN_RRC_MeasResultNR::ASN_RRC_MeasResultNR__ext1>();
+    asn::SequenceAdd(c1.choice.measurementReport->measResults.measResultServingMOList,measResultServMO1);
+    asn::SequenceAdd(*c1.choice.measurementReport->measResults.measResultNeighCells->choice.measResultListNR,nrElement);
+    //asn::SetOctetString(*c1.choice.measurementReport->measResults, nasPdu);
+
+    sendRrcMessage(pdu);
+    asn::Free(asn_DEF_ASN_RRC_UL_DCCH_Message, pdu);
+}
+
 void UeRrcTask::deliverUplinkNas(uint32_t pduId, OctetString &&nasPdu)
 {
     if (!m_base->shCtx.currentCell.get<bool>([](auto &value) { return value.hasValue(); }))

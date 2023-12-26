@@ -340,6 +340,32 @@ void NgapTask::onLoop()
             
             break;
         }
+        case NmGnbRrcToNgap::BEFOREHAND_HO_FROM_UE: {
+            m_logger->info("NgapTask::handleBeforehand_HO_From_UE");
+            OCTET_STRING gnb_ip = {};
+            gnb_ip.buf = (uint8_t *)CALLOC(4,1);
+            gnb_ip.size = 4;
+            for (int i=0;i<gnb_ip.size;i++){
+                gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
+                m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
+            }
+            cJSON *json = cJSON_CreateObject();
+            cJSON_AddNumberToObject(json, "ueId", w.ueId);
+            cJSON_AddNumberToObject(json, "ack", 0);
+            cJSON_AddNumberToObject(json, "length", encoded);
+            cJSON_AddNumberToObject(json, "B_HO", 1);
+            cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+            cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+            cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+            cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+            cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
+            auto encodeStr = cJSON_PrintUnformatted(json);
+            //char wholeEncode[1000] = {};
+            // memcpy(wholeEncode,encodeStr,strlen(encodeStr));
+            // memcpy(wholeEncode+strlen(encodeStr),buffer,encoded);
+            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+            break;
+        }
         }
         break;
     }

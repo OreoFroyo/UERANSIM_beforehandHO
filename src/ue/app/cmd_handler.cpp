@@ -269,13 +269,24 @@ void UeCmdHandler::handleCmdImpl(NmUeCliCommand &msg)
     }
     case app::UeCliCommand::HANDOVER: {
         Json json = Json::Obj({});
-        json = "successful hahaha";
+        json = "handover successfully";
 
         m_base->nasTask->mm->handoverEvent();
 
         sendResult(msg.address, json.dumpYaml());
         break;
     }
+    case app::UeCliCommand::BEFOREHAND_HO_UE:{
+        Json json = Json::Obj({});
+        json = "Beforehand-HO-toTargetGNB Signal Send Successfully";
+
+        UeRrcTask::deliverMeasurementReportForbeforehandHO();
+        
+        sendResult(msg.address, json.dumpYaml());
+        break;
+
+    }
+
     }
 }
 

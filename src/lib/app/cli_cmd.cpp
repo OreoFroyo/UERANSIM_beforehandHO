@@ -176,7 +176,7 @@ static OrderedMap<std::string, CmdEntry> g_gnbCmdEntries = {
     {"ue-release", {"Request a UE context release for the given UE", "<ue-id>", DefaultDesc, false}},
     {"xnap-setup", {"setup a xnap connection between gnbs", "" ,DescForXnapSetup, true}},
     {"path-switch", {"Path Switch manually", "<ue-id>", DefaultDesc, false}},
-    {"beforehand-handover", {"send beforehand handover message to core via target gnb", "<ue-id>" ,DescForBeforehandHandover, true}},
+    {"beforehand-HO-toCore", {"send beforehand-handover sinal to core via target gnb (for downlink)", "<ue-id>" ,DescForBeforehandHandover, true}},
 };
 
 static OrderedMap<std::string, CmdEntry> g_ueCmdEntries = {
@@ -192,7 +192,8 @@ static OrderedMap<std::string, CmdEntry> g_ueCmdEntries = {
     {"ps-release-all", {"Trigger PDU session release procedures for all active sessions", "", DefaultDesc, false}},
     {"deregister",
      {"Perform a de-registration by the UE", "<normal|disable-5g|switch-off|remove-sim>", DefaultDesc, true}},
-    {"handover", {"handover gogogo", "", DefaultDesc, false}},
+    {"handover", {"handover signal send", "", DefaultDesc, false}},
+    {"beforehand-HO-toTargetGNB", {"beforehand-handover signal send to target gnb (for uplink)", "", DefaultDesc, false}},
 };
 
 static std::unique_ptr<GnbCliCommand> GnbCliParseImpl(const std::string &subCmd, const opt::OptionsResult &options,
@@ -262,9 +263,9 @@ static std::unique_ptr<GnbCliCommand> GnbCliParseImpl(const std::string &subCmd,
             CMD_ERR("Invalid UE ID")
         return cmd;
     }
-    else if (subCmd == "beforehand-handover")
+    else if (subCmd == "beforehand-HO-toCore")
     {
-        auto cmd = std::make_unique<GnbCliCommand>(GnbCliCommand::BEFOREHAND_HANDOVER);
+        auto cmd = std::make_unique<GnbCliCommand>(GnbCliCommand::BEFOREHAND_HO_GNB);
         cmd->ueId = utils::ParseInt(options.getOption(std::nullopt,"ueid"));
         printf("cmd->ueId = [%d]", cmd->ueId);
         return cmd;
@@ -388,7 +389,10 @@ static std::unique_ptr<UeCliCommand> UeCliParseImpl(const std::string &subCmd, c
     {
         return std::make_unique<UeCliCommand>(UeCliCommand::HANDOVER);
     }
-    
+    else if (subCmd == "beforehand-HO-toTargetGNB")
+    {
+        return std::make_unique<UeCliCommand>(UeCliCommand::BEFOREHAND_HO_UE);
+    }
 
     return nullptr;
 }
