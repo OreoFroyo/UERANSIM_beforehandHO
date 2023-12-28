@@ -138,6 +138,9 @@ void GnbRrcTask::receiveRrcReconfigurationComplete(int ueId, const ASN_RRC_RRCRe
     m_logger->info("Receive RRC ReconfigurationComplete");
     if(mySctpHandler::B_HO == 1) {
         m_logger->info("B_HO = 1 | stop send path switch message");
+        auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::DO_BHO_PATHSWITCH);
+        w->ueId = ueId;
+        m_base->ngapTask->push(std::move(w));
         return;
     }
     m_logger->info("send path switch message");

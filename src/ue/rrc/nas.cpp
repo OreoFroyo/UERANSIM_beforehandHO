@@ -96,7 +96,7 @@ void UeRrcTask::deliverMeasurementReportForbeforehandHO()
     c1.present = ASN_RRC_MeasurementReport__criticalExtensions_PR_measurementReport;
     c1.choice.measurementReport = asn::New<ASN_RRC_MeasurementReport_IEs>();
     //c1.choice.measurementReport->measResults = asn::New<ASN_RRC_MeasResults_t>();
-    c1.choice.measurementReport->measResults.measId = 88;
+    c1.choice.measurementReport->measResults.measId = 7;
     c1.choice.measurementReport->measResults.measResultNeighCells = asn::New<ASN_RRC_MeasResults::ASN_RRC_MeasResults__measResultNeighCells>();
     //c1.choice.measurementReport->measResults.measResultNeighCells->choice.measResultListEUTRA = asn::New<ASN_RRC_MeasResultListEUTRA>();
     c1.choice.measurementReport->measResults.measResultNeighCells->choice.measResultListNR = asn::New<ASN_RRC_MeasResultListNR>();

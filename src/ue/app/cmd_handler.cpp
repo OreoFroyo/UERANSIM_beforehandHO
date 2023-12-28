@@ -279,8 +279,8 @@ void UeCmdHandler::handleCmdImpl(NmUeCliCommand &msg)
     case app::UeCliCommand::BEFOREHAND_HO_UE:{
         Json json = Json::Obj({});
         json = "Beforehand-HO-toTargetGNB Signal Send Successfully";
-
-        UeRrcTask::deliverMeasurementReportForbeforehandHO();
+        
+        m_base->rrcTask->deliverMeasurementReportForbeforehandHO();
         
         sendResult(msg.address, json.dumpYaml());
         break;

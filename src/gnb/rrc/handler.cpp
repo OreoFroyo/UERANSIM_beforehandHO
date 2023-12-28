@@ -170,7 +170,7 @@ void GnbRrcTask::handleRadioLinkFailure(int ueId)
 
 void GnbRrcTask::receiveMeasurementReport(int ueId , const ASN_RRC_MeasurementReport &msg)
 {
-    if(msg->measResults.measId == 88){ //beforehand-HO
+    if(msg.criticalExtensions.choice.measurementReport->measResults.measId == 7){ //beforehand-HO
         auto w = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::BEFOREHAND_HO_FROM_UE);
         w->ueId = ueId;
         // OctetString nasPdu = asn::GetOctetString(*msg.criticalExtensions.choice.measurementReport->measResults);

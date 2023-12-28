@@ -84,9 +84,9 @@ namespace nr::gnb
                 // cJSON* buffer1 = cJSON_GetObjectItem(json, "buffer");
                 // unsigned char* bufferStr = (unsigned char*)buffer1->valuestring;
                 // printf("buffer is : %s\n",bufferStr);
-                cJSON* length1 = cJSON_GetObjectItem(json, "length");
-                int lengthStr = length1->valueint;
-                printf("length is : %d\n",lengthStr);
+                // cJSON* length1 = cJSON_GetObjectItem(json, "length");
+                // int lengthStr = length1->valueint;
+                // printf("length is : %d\n",lengthStr);
                 cJSON* teid = cJSON_GetObjectItem(json, "upf_teid");
                 server->ul_teid = teid->valueint;
                 char * up_adress[4] = {};
