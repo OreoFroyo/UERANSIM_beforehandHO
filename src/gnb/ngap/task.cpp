@@ -332,6 +332,11 @@ void NgapTask::onLoop()
             cJSON_AddNumberToObject(json, "ack", 0);
             cJSON_AddNumberToObject(json, "length", encoded);
             cJSON_AddNumberToObject(json, "be", 1);
+            cJSON_AddNumberToObject(json, "upf_teid", m_base->sctpServer->ul_teid);
+            cJSON_AddNumberToObject(json, "upf_ip0", m_base->sctpServer->ul_ip[0]);
+            cJSON_AddNumberToObject(json, "upf_ip1", m_base->sctpServer->ul_ip[1]);
+            cJSON_AddNumberToObject(json, "upf_ip2", m_base->sctpServer->ul_ip[2]);
+            cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
             auto encodeStr = cJSON_PrintUnformatted(json);
 
             sendXnapMessage(buffer,encoded);
@@ -366,22 +371,22 @@ void NgapTask::onLoop()
             break;
         }
         case NmGnbRrcToNgap::DO_BHO_PATHSWITCH:{
-            createUeContext(w.ueId);
-            auto *ueCtx = findUeContext(w.ueId);
-            if (ueCtx == nullptr)
-                return;
-            auto *amfCtx = findAmfContext(ueCtx->associatedAmfId);
-            if (amfCtx == nullptr)
-                return;
-            amfCtx->nextStream = (amfCtx->nextStream + 1) % amfCtx->association.outStreams;
-            if ((amfCtx->nextStream == 0) && (amfCtx->association.outStreams > 1))
-                amfCtx->nextStream += 1;
-            ueCtx->uplinkStream = amfCtx->nextStream;
-            auto w1 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_UPDATE);
-            ueCtx->ueAmbr.ulAmbr = 1ull<<63;
-            ueCtx->ueAmbr.dlAmbr = 1ull<<63;
-            w1->update = std::make_unique<GtpUeContextUpdate>(false, ueCtx->ctxId, ueCtx->ueAmbr);
-            m_base->gtpTask->push(std::move(w1));
+            // createUeContext(w.ueId);
+            // auto *ueCtx = findUeContext(w.ueId);
+            // if (ueCtx == nullptr)
+            //     return;
+            // auto *amfCtx = findAmfContext(ueCtx->associatedAmfId);
+            // if (amfCtx == nullptr)
+            //     return;
+            // amfCtx->nextStream = (amfCtx->nextStream + 1) % amfCtx->association.outStreams;
+            // if ((amfCtx->nextStream == 0) && (amfCtx->association.outStreams > 1))
+            //     amfCtx->nextStream += 1;
+            // ueCtx->uplinkStream = amfCtx->nextStream;
+            // auto w1 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_UPDATE);
+            // ueCtx->ueAmbr.ulAmbr = 1ull<<63;
+            // ueCtx->ueAmbr.dlAmbr = 1ull<<63;
+            // w1->update = std::make_unique<GtpUeContextUpdate>(false, ueCtx->ctxId, ueCtx->ueAmbr);
+            // m_base->gtpTask->push(std::move(w1));
             break;
         }
         }

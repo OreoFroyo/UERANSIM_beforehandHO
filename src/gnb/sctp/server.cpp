@@ -127,6 +127,19 @@ namespace nr::gnb
                 cJSON* uesti2 = cJSON_GetObjectItem(json, "uesti2");
                 cJSON* uesti3 = cJSON_GetObjectItem(json, "uesti3");
                 cJSON* uesti4 = cJSON_GetObjectItem(json, "uesti4");
+                cJSON* ip0 = cJSON_GetObjectItem(json, "upf_ip0");
+                cJSON* ip1 = cJSON_GetObjectItem(json, "upf_ip1");
+                cJSON* ip2 = cJSON_GetObjectItem(json, "upf_ip2");
+                cJSON* ip3 = cJSON_GetObjectItem(json, "upf_ip3");
+                cJSON* teid = cJSON_GetObjectItem(json, "upf_teid");
+                
+                if(ip0 != NULL && ip1 != NULL && ip2 != NULL && ip3 != NULL && teid != NULL){
+                    server->ul_teid = teid->valueint;
+                    server->ul_ip[0] = ip0->valueint;
+                    server->ul_ip[1] = ip1->valueint;
+                    server->ul_ip[2] = ip2->valueint;
+                    server->ul_ip[3] = ip3->valueint;
+                }
                 uint64_t uesti;
                 uint16_t uesti1c,uesti2c,uesti3c,uesti4c;
                 if (uesti1!=NULL && uesti2 !=NULL) {
