@@ -11,8 +11,9 @@ The diagram shows a handover process based on the Xn interface (including propos
 <p align="center">
   <a href="https://github.com/OreoFroyo/UERANSIM_beforehandHO"><img src="/.github/handover_procedure_our.png" width="700" title="UERANSIM"></a>
 </p>
-In this project, we implemented the contents on the UERANSIM side, including Xn connection, RRC Reconfiguration and other processes. For changes to the core network, please refer to another repository (https://github.com/OreoFroyo/open5gs_iupf [branch: pure])
+In this project, we implemented the contents on the UERANSIM side, including Xn connection, RRC Reconfiguration and other processes. 
 
+For changes to the core network, please refer to another repository (https://github.com/OreoFroyo/open5gs_iupf [branch: pure])
 
 To enable gnb to support Xn-based handover, we implemented in UERANSIM:
 - Xn interface in gnb
