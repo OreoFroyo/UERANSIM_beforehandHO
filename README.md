@@ -9,7 +9,7 @@ Open5GS is a C-language Open Source implementation of 5G Core and EPC. (https://
 
 The diagram shows a handover process based on the Xn interface (including proposed changes). Steps 1-10 are a standard process.
 <p align="center">
-  <a href="https://github.com/OreoFroyo/UERANSIM_beforehandHO"><img src="/.github/handover_procedure_our.png" width="700" title="UERANSIM"></a>
+  <a href="https://github.com/OreoFroyo/UERANSIM_beforehandHO"><img src="/.github/handover_procedure.png" width="700" title="UERANSIM"></a>
 </p>
 In this project, we implemented the contents on the UERANSIM side, including Xn connection, RRC Reconfiguration and other processes. 
 
