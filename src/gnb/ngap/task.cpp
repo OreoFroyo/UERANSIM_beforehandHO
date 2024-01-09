@@ -342,7 +342,7 @@ void NgapTask::onLoop()
             sendXnapMessage(buffer,encoded);
             utils::Sleep(2);
             sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
-            
+     
             break;
         }
         case NmGnbRrcToNgap::BEFOREHAND_HO_FROM_UE: {
