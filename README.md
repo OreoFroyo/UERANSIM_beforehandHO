@@ -2,6 +2,7 @@
 In order to support handover in 5G SA, we firstly implement **handover based on Xn interface** in UERANSIM. Further, we modified the Open5GS and UERANSIM implementations to support the proposed fast handover.
 
 UERANSIM is a open source state-of-the-art 5G UE and RAN (gNodeB) simulator. (https://github.com/aligungr/UERANSIM)
+
 Open5GS is a C-language Open Source implementation of 5G Core and EPC. (https://github.com/open5gs/open5gs)
 
 ## handover based on Xn interface
@@ -12,6 +13,7 @@ The diagram shows a handover process based on the Xn interface (including propos
 </p>
 In this project, we implemented the contents on the UERANSIM side, including Xn connection, RRC Reconfiguration and other processes. For changes to the core network, please refer to another repository (https://github.com/OreoFroyo/open5gs_iupf [branch: pure])
 
+
 To enable gnb to support Xn-based handover, we implemented in UERANSIM:
 - Xn interface in gnb
 - Complete signaling process between UE, gnbs and core network
@@ -21,6 +23,7 @@ To enable gnb to support Xn-based handover, we implemented in UERANSIM:
 The deployment and startup of UERANSIM and Open5GS is unchanged, please refer to the URL provided above.
 
 Environment preparation: two gnbs, one UE, one core network
+
 Make sure the ue has connected to the core network through one gnb and can discover another gnb, the gnb that has been connected to the UE is called **Source gnb** and the other is called **Target gnb** below.
 
 Firstly, view the source gnb id and enter the command line interface:
@@ -61,6 +64,7 @@ ping -I uesimtun0 www.google.com
 
 ## Beforehand-handover in NTN
 In order to realize the optimization scheme in paper **"Accelerating Handover in Mobile Satellite Network"**, we further modified the handover process. To be specific, source gnb can send path switch signaling to the core network through target gnb at some point before handover (maybe some time before handover), and the core network stores the signaling but does not trigger it. Correspond to steps 2,3,5,8 in the figure. 
+
 When UE really needs to handover, in the right half of the figure, the signaling stored by the AMF will be triggered at the same time, ensuring a timely handover between the uplink and downlink.
 
 <p align="center">
@@ -70,6 +74,7 @@ When UE really needs to handover, in the right half of the figure, the signaling
 ### Usage
 Environment preparation: two gnbs, one UE, one core network
 Make sure the ue has connected to the core network through one gnb and can discover another gnb, the gnb that has been connected to the UE is called **Source gnb** and the other is called **Target gnb** below.
+
 Firstly, view the source gnb id and enter the command line interface:
 ``` 
 user@pc:~/UERANSIM/build$ ./nr-cli UERANSIM-gnb-001-01-1 
