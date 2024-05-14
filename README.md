@@ -1,4 +1,16 @@
 ## Overview
+This is the code repository introduced and used in "Accelerating Handover in Mobile Satellite Network" 
+by Jiasheng Wu, Shaojie Su, Xiong Wang, Jingjing Zhang and Yue Gao, which is published in the IEEE INFOCOM 2024.
+
+BibTeX citation:
+```
+@inproceedings {
+    author = {Jiasheng Wu, Shaojie Su, Xiong Wang, Jingjing Zhang and Yue Gao},
+    title = {{Accelerating Handover in Mobile Satellite Network}},
+    booktitle = {{IEEE INFOCOM}},
+    year = {2024}
+}
+```
 **"Accelerating Handover in Mobile Satellite Network", INFOCOM 2024**
 
 **Link:** https://arxiv.org/abs/2403.11502
