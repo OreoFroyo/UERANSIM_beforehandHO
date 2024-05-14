@@ -4,16 +4,13 @@ by Jiasheng Wu, Shaojie Su, Xiong Wang, Jingjing Zhang and Yue Gao, which is pub
 
 BibTeX citation:
 ```
-@inproceedings {
-    author = {Jiasheng Wu, Shaojie Su, Xiong Wang, Jingjing Zhang and Yue Gao},
-    title = {{Accelerating Handover in Mobile Satellite Network}},
-    booktitle = {{IEEE INFOCOM}},
-    year = {2024}
+@conference{infocom24handover,
+  title={Accelerating Handover in Mobile Satellite Network},
+  author={Jiasheng Wu, Shaojie Su, Xiong Wang, Jingjing Zhang, Yue Gao},
+  booktitle={INFOCOM},
+  year={2024}
 }
 ```
-**"Accelerating Handover in Mobile Satellite Network", INFOCOM 2024**
-
-**Link:** https://arxiv.org/abs/2403.11502
 
 In order to support handover in 5G SA, we firstly implement **handover based on Xn interface** in UERANSIM. Further, we modified the Open5GS and UERANSIM implementations to support the proposed fast handover.
 
