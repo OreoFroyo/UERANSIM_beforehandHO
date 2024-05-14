@@ -5,6 +5,9 @@ UERANSIM is a open source state-of-the-art 5G UE and RAN (gNodeB) simulator. (ht
 
 Open5GS is a C-language Open Source implementation of 5G Core and EPC. (https://github.com/open5gs/open5gs)
 
+**"Accelerating Handover in Mobile Satellite Network"**, INFOCOM 2024
+**Link:** https://arxiv.org/abs/2403.11502
+
 ## handover based on Xn interface
 
 The diagram shows a handover process based on the Xn interface (including proposed changes). Steps 1-10 are a standard process.
