@@ -8,6 +8,7 @@
 #include <asn/ngap/ASN_NGAP_NGAP-PDU.h>
 #include <gnb/rrc/task.hpp>
 #include <gnb/sctp/task.hpp>
+#include <unordered_map>
 // #include "task.hpp"
 
 namespace nr::gnb
@@ -21,11 +22,12 @@ class GnbSctpServer
         char target_ip[4];
         uint32_t ul_teid;
         char ul_ip[4];
-    private:
+        std::unordered_map<int, char[4]> handover_ips;
+        std::unordered_map<int, std::string> source_ips;
         sctp::SctpServer * sctpserver;
         
     public:
-        GnbSctpServer(TaskBase *base, const std::string &address, uint16_t port);
+        GnbSctpServer(TaskBase *base, const std::string &address, uint16_t port, int id);
         ~GnbSctpServer();
         void start();  
 };
@@ -34,10 +36,11 @@ class GnbSctpServer
 class mySctpHandler : public sctp::ISctpHandler
 {
     private:
-        int clientId;
+        
         GnbSctpServer *const server;
     
     public:
+	int clientId;
         static inline int B_HO = 0;
         
     public:

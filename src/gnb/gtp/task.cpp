@@ -179,7 +179,8 @@ void GtpTask::handleUeContextDelete(int ueId)
 }
 
 void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
-{
+{   
+    m_logger->info("before uplink");
     const uint8_t *data = pdu.data();
 
     // ignore non IPv4 packets
@@ -198,6 +199,7 @@ void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
 
     if (m_rateLimiter->allowUplinkPacket(sessionInd, static_cast<int64_t>(pdu.length())))
     {
+	m_logger->info("before uplink;after allow");
         gtp::GtpMessage gtp{};
         gtp.payload = std::move(pdu);
         gtp.msgType = gtp::GtpMessage::MT_G_PDU;

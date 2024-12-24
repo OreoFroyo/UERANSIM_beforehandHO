@@ -44,7 +44,8 @@ class SctpTask : public NtsTask
   public:
     explicit SctpTask(TaskBase *base);
     ~SctpTask() override = default;
-
+  public:
+    std::unordered_map<std::string,int> id_ip;
   protected:
     void onStart() override;
     void onLoop() override;

@@ -102,7 +102,7 @@ class NgapTask : public NtsTask
     /* Message transport */
     void sendNgapNonUe(int amfId, ASN_NGAP_NGAP_PDU *pdu);
     void sendNgapUeAssociated(int ueId, ASN_NGAP_NGAP_PDU *pdu);
-    void sendXnapMessage(uint8_t *buffer , unsigned long encoded);
+    void sendXnapMessage(uint8_t *buffer , unsigned long encoded, int clientId);
     void handleSctpMessage(int amfId, uint16_t stream, const UniqueBuffer &buffer);
     bool handleSctpStreamId(int amfId, int stream, const ASN_NGAP_NGAP_PDU &pdu);
     void sendNgapUeAssociatedtoGnb(int ueId, ASN_NGAP_NGAP_PDU *pdu);

@@ -147,12 +147,24 @@ static opt::OptionsDescription DescForXnapSetup(const std::string &subCommand, c
         {},  {}, entry.descriptionText, {}, subCommand, {entry.usageText}, {}, entry.helpIfEmpty,
         true};
     
+    res.items.emplace_back(std::nullopt, "localPort", "tell me localPort!!!", "value");
     res.items.emplace_back(std::nullopt, "ip", "tell me ip!!!", "value");
     res.items.emplace_back(std::nullopt, "port", "tell me port!!!", "value");
 
     return res;
 }
 
+static opt::OptionsDescription DescForHandoverSetup(const std::string &subCommand, const CmdEntry &entry)
+{
+    auto res = opt::OptionsDescription{
+        {},  {}, entry.descriptionText, {}, subCommand, {entry.usageText}, {}, entry.helpIfEmpty,
+        true};
+    
+    res.items.emplace_back(std::nullopt, "ueId", "tell me ueId!!!", "value");
+    res.items.emplace_back(std::nullopt, "ip", "tell me ip!!!", "value");
+
+    return res;
+}
 static opt::OptionsDescription DescForBeforehandHandover(const std::string &subCommand, const CmdEntry &entry)
 {
     auto res = opt::OptionsDescription{
@@ -177,6 +189,8 @@ static OrderedMap<std::string, CmdEntry> g_gnbCmdEntries = {
     {"xnap-setup", {"setup a xnap connection between gnbs", "" ,DescForXnapSetup, true}},
     {"path-switch", {"Path Switch manually", "<ue-id>", DefaultDesc, false}},
     {"beforehand-HO-toCore", {"send beforehand-handover sinal to core via target gnb (for downlink)", "<ue-id>" ,DescForBeforehandHandover, true}},
+    {"handover-setup", {"setup the handover config", "" ,DescForHandoverSetup, true}},
+    {"find-ue-ips", {"find the ue connecting to the gnb", "", DefaultDesc, false}},
 };
 
 static OrderedMap<std::string, CmdEntry> g_ueCmdEntries = {
@@ -246,10 +260,23 @@ static std::unique_ptr<GnbCliCommand> GnbCliParseImpl(const std::string &subCmd,
     else if (subCmd == "xnap-setup")
     {
         auto cmd = std::make_unique<GnbCliCommand>(GnbCliCommand::XNAP_CONNECTION);
+        cmd->localPort=options.getOption(std::nullopt,"localPort");
         cmd->gnbIp = options.getOption(std::nullopt,"ip");
         cmd->port = options.getOption(std::nullopt,"port");
         return cmd;
         
+    }  
+    else if (subCmd == "handover-setup")
+    {
+        auto cmd = std::make_unique<GnbCliCommand>(GnbCliCommand::HANDOVER_CONFIG);
+        cmd->ueId=std::stoi(options.getOption(std::nullopt,"ueId"));
+        cmd->handoverIp = options.getOption(std::nullopt,"ip");
+        return cmd;
+        
+    }  
+    else if (subCmd == "find-ue-ips")
+    {
+        return std::make_unique<GnbCliCommand>(GnbCliCommand::FIND_UE_IPS);
     }  
     else if (subCmd == "path-switch")
     {

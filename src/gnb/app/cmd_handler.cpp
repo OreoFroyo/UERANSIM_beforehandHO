@@ -155,11 +155,49 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
         }
         break;
     }
+    case app::GnbCliCommand::HANDOVER_CONFIG: {
+        if (m_base->ngapTask->m_ueCtx.count(msg.cmd->ueId) == 0)
+            sendError(msg.address, "UE not found with given ID");
+        else
+        {
+            std::string octet;
+            int octetValue = 0;
+
+            for (int i = 0; i < 4; i++) {
+                octet.clear();
+                size_t pos = msg.cmd->handoverIp.find('.');
+                
+                if (pos != std::string::npos) {
+                    octet = msg.cmd->handoverIp.substr(0, pos);
+                    msg.cmd->handoverIp = msg.cmd->handoverIp.substr(pos + 1);
+                } else {
+                    octet = msg.cmd->handoverIp;
+                }
+                
+                // Convert the octet string to an integer and store it in target_ip
+                octetValue = std::stoi(octet);
+                m_base->sctpServer->handover_ips[msg.cmd->ueId][i] = octetValue;
+            }
+            sendResult(msg.address, "config complete");
+        }
+        break;
+    }
+    case app::GnbCliCommand::FIND_UE_IPS: {
+        std::string result="";
+	for (auto &ue : m_base->ngapTask->m_ueCtx)
+	{
+    		
+    		result+=std::to_string(ue.first)+":"+m_base->rlsTask->getudp()->findUeAddr(ue.first)+";";
+	}
+        sendResult(msg.address, result);
+
+        break;
+    }
     case app::GnbCliCommand::XNAP_CONNECTION: {
         auto msg1 = std::make_unique<NmGnbSctp>(NmGnbSctp::GNB_CONNECTION_REQUEST);
-        msg1->clientId = 10;//amfCtx.second->ctxId; 
+        msg1->clientId = std::atoi(msg.cmd->localPort.c_str());//amfCtx.second->ctxId; 
         msg1->localAddress = m_base->config->ngapIp;
-        msg1->localPort = 0;
+        msg1->localPort = std::atoi(msg.cmd->localPort.c_str());
         msg1->remoteAddress = msg.cmd->gnbIp;
         std::string octet;
         int octetValue = 0;
@@ -184,7 +222,8 @@ void GnbCmdHandler::handleCmdImpl(NmGnbCliCommand &msg)
 
         msg1->remotePort = std::atoi(msg.cmd->port.c_str());
         msg1->ppid = sctp::PayloadProtocolId::NGAP;
-        msg1->associatedTask = m_base->ngapTask; 
+        msg1->associatedTask = m_base->ngapTask;
+        m_base->sctpTask->id_ip[msg.cmd->gnbIp]=msg1->clientId;	
         m_base->sctpTask->push(std::move(msg1));
         sendResult(msg.address,"XnAP Connection Setup Successfully");
         break;

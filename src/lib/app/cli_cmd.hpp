@@ -32,6 +32,8 @@ struct GnbCliCommand
         XNAP_CONNECTION,
         PATH_SWITCH_REQ,
         BEFOREHAND_HO_GNB,
+        HANDOVER_CONFIG,
+        FIND_UE_IPS,
     } present;
 
     // AMF_INFO
@@ -39,8 +41,12 @@ struct GnbCliCommand
 
     // UE_RELEASE_REQ
     int ueId{};
+
+    std::string localPort{};
     
     std::string gnbIp{};
+
+    std::string handoverIp{};
 
     std::string port{};
 

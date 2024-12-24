@@ -348,6 +348,17 @@ struct TaskBase
     GnbRlsTask *rlsTask{};
     GnbSctpServer *sctpServer{};
     
+    GnbSctpServer *sctpServer2{};
+    GnbSctpServer *sctpServer3{};
+    GnbSctpServer *sctpServer4{};
+
+
+    GnbSctpServer *sctpServer5{};
+
+    GnbSctpServer *sctpServer6{};
+    GnbSctpServer *sctpServer7{};
+    GnbSctpServer *sctpServer8{};
+    GnbSctpServer *sctpServer9{};
 };
 
 Json ToJson(const GnbStatusInfo &v);

@@ -415,6 +415,7 @@ void SctpTask::receiveConnectionClose(int clientId)
 
 void SctpTask::receiveSendMessage(int clientId, uint16_t stream, UniqueBuffer &&buffer)
 {
+    m_logger->info("client_id:%d",clientId);
     ClientEntry *entry = m_clients[clientId];
     if (entry == nullptr)
     {

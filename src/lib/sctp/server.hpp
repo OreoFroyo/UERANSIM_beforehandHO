@@ -23,6 +23,8 @@ class SctpServer
     sctp::ISctpHandler* handler;
 
   public:
+    int shutd;
+    std::string source_ip;
     SctpServer(const std::string &address, uint16_t port,sctp::ISctpHandler* newhandler);
     ~SctpServer();
     void loop();

@@ -7,7 +7,7 @@
 //
 
 #include "utils.hpp"
-
+#include <iostream>
 #include <utils/common.hpp>
 
 namespace nr::gnb
@@ -79,7 +79,7 @@ TokenBucket::TokenBucket(int64_t byteCapacity) : byteCapacity(byteCapacity)
 }
 
 bool TokenBucket::tryConsume(uint64_t numberOfTokens)
-{
+{   
     if (byteCapacity > 0)
     {
         refill();
@@ -142,7 +142,9 @@ bool RateLimiter::allowUplinkPacket(uint64_t pduSession, uint64_t packetSize)
     if (uplinkByUe.count(ueId))
     {
         auto &bucket = uplinkByUe[ueId];
+	std::cout<<packetSize;
         if (!bucket->tryConsume(packetSize))
+	    
             return false;
     }
 
