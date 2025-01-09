@@ -129,10 +129,9 @@ void NgapTask::sendNgapNonUe(int associatedAmf, ASN_NGAP_NGAP_PDU *pdu)
     asn::Free(asn_DEF_ASN_NGAP_NGAP_PDU, pdu);
 }
 
-void NgapTask::sendXnapMessage(uint8_t *buffer , unsigned long encoded)
-{
+void NgapTask::sendXnapMessage(uint8_t *buffer , unsigned long encoded, int clientId){
     auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
-        msg->clientId = 10;
+        msg->clientId = clientId;
         msg->stream = 1;
         msg->buffer = UniqueBuffer{buffer, static_cast<size_t>(encoded)};
         m_base->sctpTask->push(std::move(msg));

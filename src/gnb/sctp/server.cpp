@@ -6,9 +6,9 @@
 namespace nr::gnb
 {
 
-    GnbSctpServer::GnbSctpServer(TaskBase *base, const std::string &address, uint16_t port){
+    GnbSctpServer::GnbSctpServer(TaskBase *base, const std::string &address, uint16_t port, int id){
         m_base = base;
-        sctp::ISctpHandler*  handler = new mySctpHandler(this,10);
+        sctp::ISctpHandler*  handler = new mySctpHandler(this,id);
         sctpserver = new sctp::SctpServer(address,port,handler);
     }
 
@@ -30,6 +30,7 @@ namespace nr::gnb
 
     void mySctpHandler::onAssociationShutdown(){
         printf("printf onAssociationShutdown:");
+	server->sctpserver->shutd=1;
         // auto w = std::make_unique<NmGnbSctp>(NmGnbSctp::ASSOCIATION_SHUTDOWN);
         // w->clientId = clientId;
         // sctpTask->push(std::move(w));
@@ -88,16 +89,18 @@ namespace nr::gnb
                 // int lengthStr = length1->valueint;
                 // printf("length is : %d\n",lengthStr);
                 cJSON* teid = cJSON_GetObjectItem(json, "upf_teid");
-                server->ul_teid = teid->valueint;
+                server->m_base->sctpServer->ul_teid = teid->valueint;
+
+                server->m_base->sctpServer->source_ips[ueId]=server->sctpserver->source_ip;
                 char * up_adress[4] = {};
                 cJSON* ip0 = cJSON_GetObjectItem(json, "upf_ip0");
                 cJSON* ip1 = cJSON_GetObjectItem(json, "upf_ip1");
                 cJSON* ip2 = cJSON_GetObjectItem(json, "upf_ip2");
                 cJSON* ip3 = cJSON_GetObjectItem(json, "upf_ip3");
-                server->ul_ip[0] = ip0->valueint;
-                server->ul_ip[1] = ip1->valueint;
-                server->ul_ip[2] = ip2->valueint;
-                server->ul_ip[3] = ip3->valueint;
+                server->m_base->sctpServer->ul_ip[0] = ip0->valueint;
+                server->m_base->sctpServer->ul_ip[1] = ip1->valueint;
+                server->m_base->sctpServer->ul_ip[2] = ip2->valueint;
+                server->m_base->sctpServer->ul_ip[3] = ip3->valueint;
                 uint64_t uesti = server->m_base->rlsTask->getudp()->findMySti(); // not uesti actually, it's my sti
                 uint16_t uesti1,uesti2,uesti3,uesti4;
                 uesti1 = uesti >> 48;
@@ -114,7 +117,10 @@ namespace nr::gnb
                 cJSON_AddNumberToObject(json2, "uesti4", uesti4);
                 unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json2);
                 auto msg = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
-                msg->clientId = 10;
+               
+
+                msg->clientId = server->m_base->sctpTask->id_ip[server->sctpserver->source_ip];
+		printf("clientId:%d\n",msg->clientId);
                 msg->stream = 1;
                 msg->buffer = UniqueBuffer{encodeStr, strlen((char *)encodeStr)};
                 
@@ -194,10 +200,19 @@ namespace nr::gnb
                 }  
                 server->m_base->rrcTask->exchangeRRCConnectionWithSti(ue->ctxId,uesti);
             }
+	    else if(ack == 2){
+
+                cJSON* amfIdC = cJSON_GetObjectItem(json, "amfId");
+                cJSON* ranIdC = cJSON_GetObjectItem(json, "ranId");
+                auto msg = std::make_unique<NmGnbRrcToNgap>(NmGnbRrcToNgap::RELEASE_UE);
+                msg->amfId = amfIdC->valueint;
+                msg->ranId = ranIdC->valueint;
+                server->m_base->ngapTask->push(std::move(msg));
+            }
         } else {
             printf("hh I'm in pdu store mode.\n");
             auto *pdu = ngap_encode::Decode<ASN_NGAP_NGAP_PDU>(asn_DEF_ASN_NGAP_NGAP_PDU, data1, length);
-            server->storePdu = pdu;
+            server->m_base->sctpServer->storePdu = pdu;
             if(!pdu){
                 printf("decode failed\n");
             }

@@ -194,6 +194,7 @@ struct NmGnbRrcToNgap : NtsMessage
         RADIO_LINK_FAILURE,
         HANDOVER_REQUEST,
         SEND_PATHSWITCH,
+	RELEASE_UE,
         SEND_FAKE_PATHSWITCH,
         BEFOREHAND_HANDOVER,
         BEFOREHAND_HO_FROM_UE,
@@ -204,6 +205,10 @@ struct NmGnbRrcToNgap : NtsMessage
     // UPLINK_NAS_DELIVERY
     // RADIO_LINK_FAILURE
     int ueId{};
+
+    int amfId{};
+
+    int ranId{};
 
     // INITIAL_NAS_DELIVERY
     // UPLINK_NAS_DELIVERY

@@ -401,6 +401,20 @@ void NgapTask::receivePathSwitchRequestAck(int amfId, ASN_NGAP_PathSwitchRequest
     auto * ueCtx = findUeByNgapIdPair(amfId,pair);
     m_logger->info("ue info:%d",ueCtx->ctxId);
     auto *ie = asn::ngap::GetProtocolIe(msg, ASN_NGAP_ProtocolIE_ID_id_PDUSessionResourceSwitchedList);
+
+    cJSON *json2 = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json2, "ack", 2);
+    
+    cJSON_AddNumberToObject(json2, "amfId", static_cast<int>(*(pair.amfUeNgapId)));
+    cJSON_AddNumberToObject(json2, "ranId", static_cast<int>(*(pair.ranUeNgapId)));
+    unsigned char* encodeStr = (unsigned char* )cJSON_PrintUnformatted(json2);
+    auto msg2 = std::make_unique<NmGnbSctp>(NmGnbSctp::SEND_MESSAGE);
+    msg2->clientId = m_base->sctpTask->id_ip[m_base->sctpServer->source_ips[ueCtx->ctxId]];
+    msg2->stream = 1;
+    msg2->buffer = UniqueBuffer{encodeStr, strlen((char *)encodeStr)};
+
+    printf("send buffer: %s\n",(char *)msg2->buffer.data());
+    m_base->sctpTask->push(std::move(msg2));
     /*if (ie){
         asn::ForeachItem(ie->PDUSessionResourceSwitchedList,[this,ueCtx](ASN_NGAP_PDUSessionResourceSwitchedItem & item){
             m_logger->info("PDUsessionid: %lu",item.pDUSessionID);

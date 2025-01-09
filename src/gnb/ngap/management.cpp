@@ -85,13 +85,13 @@ NgapUeContext *NgapTask::findUeByNgapIdPair(int amfCtxId, const NgapIdPair &idPa
 {
     auto &amfId = idPair.amfUeNgapId;
     auto &ranId = idPair.ranUeNgapId;
-
+    m_logger->info("amf info:%d",amfCtxId);
     if (!amfId.has_value() && !ranId.has_value())
     {
         sendErrorIndication(amfCtxId, NgapCause::Protocol_abstract_syntax_error_falsely_constructed_message);
         return nullptr;
     }
-
+m_logger->info("amf info2:%d",amfCtxId);
     if (!amfId.has_value())
     {
         auto ue = findUeByRanId(ranId.value());
@@ -103,7 +103,7 @@ NgapUeContext *NgapTask::findUeByNgapIdPair(int amfCtxId, const NgapIdPair &idPa
 
         return ue;
     }
-
+m_logger->info("amf info3:%d",amfCtxId);
     if (!ranId.has_value())
     {
         auto ue = findUeByAmfId(amfId.value());
@@ -115,14 +115,14 @@ NgapUeContext *NgapTask::findUeByNgapIdPair(int amfCtxId, const NgapIdPair &idPa
 
         return ue;
     }
-
+m_logger->info("amf info4:%d",amfCtxId);
     auto ue = findUeByRanId(ranId.value());
     if (ue == nullptr)
     {
         sendErrorIndication(amfCtxId, NgapCause::RadioNetwork_unknown_local_UE_NGAP_ID);
         return nullptr;
     }
-
+m_logger->info("amf info5:%d",amfCtxId);
     if (ue->amfUeNgapId == -1)
         ue->amfUeNgapId = amfId.value();
     else if (ue->amfUeNgapId != amfId.value())
@@ -139,8 +139,12 @@ void NgapTask::deleteUeContext(int ueId)
     auto *ue = m_ueCtx[ueId];
     if (ue)
     {
+	m_logger->debug("UE delete find :%d",ueId);
         delete ue;
         m_ueCtx.erase(ueId);
+    }
+    else{
+	m_logger->debug("UE delete not find :%d",ueId);
     }
 }
 

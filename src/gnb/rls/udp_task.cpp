@@ -7,7 +7,7 @@
 //
 
 #include "udp_task.hpp"
-
+#include <arpa/inet.h>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -211,6 +211,20 @@ void RlsUdpTask::initialize(NtsTask *ctlTask)
 uint64_t RlsUdpTask::findUeSti(int ueId){
     m_logger->info("address:%s",m_ueMap[ueId].address.getSockAddr()->sa_data);
     return m_ueMap[ueId].sti;
+}
+
+std::string RlsUdpTask::findUeAddr(int ueId){
+    
+    
+    	std::string ip_str2="";
+    for (int i = 2; i < 6; ++i) { 
+        ip_str2 += std::to_string(static_cast<unsigned char>(m_ueMap[ueId].address.getSockAddr()->sa_data[i]));
+        if (i < 5) {
+            ip_str2 += "."; 
+        }
+    }
+
+    return ip_str2;
 }
 
 

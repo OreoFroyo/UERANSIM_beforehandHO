@@ -9,9 +9,12 @@
 #include "server.hpp"
 #include "internal.hpp"
 
+#include <utility>
+#include <iostream>
 sctp::SctpServer::SctpServer(const std::string &address, uint16_t port,sctp::ISctpHandler* newhandler) : sd(0)
 {
     handler = newhandler;
+    source_ip="192.192.192.192";
     try
     {
         sd = CreateSocket();
@@ -46,10 +49,20 @@ void sctp::SctpServer::start()
     printf("---------------start--------------\n");
     thread = std::thread{[this]() {
             printf("thread\n");
-            clientsd = MyAccept(sd);
+            while(true){
+            std::pair<int, std::string> result = MyAccept(sd);
+            clientsd=result.first;
+	    shutd=0;
+            source_ip=result.second;
+	    std::cout<<result.second;
+	    printf("source_ip:%s",source_ip);
             while (true)
             {
                  this->loop();
+		 if(shutd==1){
+			 break;
+		 }
             }
+	    }
         }};
 }

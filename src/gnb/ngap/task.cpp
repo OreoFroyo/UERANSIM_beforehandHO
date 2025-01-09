@@ -95,8 +95,8 @@ void NgapTask::onLoop()
                 amfCtx->nextStream += 1;
             ueCtx->uplinkStream = amfCtx->nextStream;
             auto w1 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_UPDATE);
-            ueCtx->ueAmbr.ulAmbr = 1ull<<63;
-            ueCtx->ueAmbr.dlAmbr = 1ull<<63;
+            ueCtx->ueAmbr.ulAmbr = 1ull<<40;
+            ueCtx->ueAmbr.dlAmbr = 1ull<<40;
             w1->update = std::make_unique<GtpUeContextUpdate>(false, ueCtx->ctxId, ueCtx->ueAmbr);
             m_base->gtpTask->push(std::move(w1));
             m_logger->info("Prepare store pdu");
@@ -139,6 +139,65 @@ void NgapTask::onLoop()
             sendNgapUeAssociated(w.ueId, pdu);
             break;
         }
+	case NmGnbRrcToNgap::RELEASE_UE:{
+            m_logger->debug("UE Context Release Command received:%d",w.ueId);
+            //auto *ueCtx = findUeContext(w.ueId);
+            //if (ueCtx == nullptr)
+            //    m_logger->debug("UE Not Find");
+            //    return;
+
+            
+            NgapIdPair pair(w.amfId,w.ranId);
+            m_logger->debug("ngap delete finish%d",w.ranId);
+	    int id=-1;
+	    for (auto &ue : m_ueCtx){
+                 m_logger->debug("%d",ue.second->ranUeNgapId);
+		 //if(static_cast<int>(w.ranId)==static_cast<int>(ue.second->ranUeNgapId)){
+		 id=ue.second->ctxId;
+		 //}
+		 
+	    }
+	    if(id==-1){
+		 return;
+            }
+            
+
+            // Notify RRC task
+            //auto w1 = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::AN_RELEASE);
+            //w1->ueId = ueCtx->ctxId;
+            //m_base->rrcTask->push(std::move(w1));
+	    // m_logger->debug("rrc delete finish");
+
+            // Notify GTP task
+            auto w2 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_RELEASE);
+            w2->ueId = id;
+            m_base->gtpTask->push(std::move(w2));
+	    m_logger->debug("gtp delete finish");
+	    m_logger->debug("ngap delete finish");
+	    m_logger->debug("ngap delete finish%d",id);
+            
+	    auto *ue = m_ueCtx[id];
+    
+	    if (ue)
+    	    {
+             	delete ue;
+             	m_ueCtx.erase(id);
+   	    }
+           // deleteUeContext(ueCtx->ctxId);
+	    // Notify RRC task
+            //auto w1 = std::make_unique<NmGnbNgapToRrc>(NmGnbNgapToRrc::AN_RELEASE);
+            //w1->ueId = w.ueId;
+            //m_base->rrcTask->push(std::move(w1));
+
+            
+	    // Notify GTP task
+            //auto w2 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_RELEASE);
+            //w2->ueId = w.ueId;
+            //m_base->gtpTask->push(std::move(w2));
+
+	  
+            break;           
+        }
         case NmGnbRrcToNgap::SEND_PATHSWITCH:{
             createUeContext(w.ueId);
             auto *ueCtx = findUeContext(w.ueId);
@@ -147,17 +206,24 @@ void NgapTask::onLoop()
             auto *amfCtx = findAmfContext(ueCtx->associatedAmfId);
             if (amfCtx == nullptr)
                 return;
+
+            
             amfCtx->nextStream = (amfCtx->nextStream + 1) % amfCtx->association.outStreams;
             if ((amfCtx->nextStream == 0) && (amfCtx->association.outStreams > 1))
                 amfCtx->nextStream += 1;
             ueCtx->uplinkStream = amfCtx->nextStream;
             auto w1 = std::make_unique<NmGnbNgapToGtp>(NmGnbNgapToGtp::UE_CONTEXT_UPDATE);
-            ueCtx->ueAmbr.ulAmbr = 1ull<<63;
-            ueCtx->ueAmbr.dlAmbr = 1ull<<63;
+            ueCtx->ueAmbr.ulAmbr = 1ull<<40;
+            ueCtx->ueAmbr.dlAmbr = 1ull<<40;
             w1->update = std::make_unique<GtpUeContextUpdate>(false, ueCtx->ctxId, ueCtx->ueAmbr);
-            m_base->gtpTask->push(std::move(w1));
+           
+	    m_base->gtpTask->push(std::move(w1));
+	    m_logger->info("Prepare trans store pdu");
             auto* pdu = m_base->sctpServer->storePdu;
+	    m_logger->info("finish store pdu");
             ASN_NGAP_PathSwitchRequest_t  *msg = &pdu->choice.initiatingMessage->value.choice.PathSwitchRequest;
+	    m_logger->info("finish store pdu2");
+
             auto *ieList = asn::ngap::GetProtocolIe(msg, ASN_NGAP_ProtocolIE_ID_id_PDUSessionResourceToBeSwitchedDLList);
             if (ieList)
             {
@@ -197,8 +263,19 @@ void NgapTask::onLoop()
                     resource->qosFlows = asn::WrapUnique(ptr, asn_DEF_ASN_NGAP_QosFlowSetupRequestList);
 
                     setupPduSessionResource(ueCtx, resource);
+
+		    asn::SetOctetString4(transfer->dL_NGU_UP_TNLInformation.choice.gTPTunnel->gTP_TEID, (octet4)resource->downTunnel.teid);
+                    OctetString transfer_s = nr::gnb::ngap_encode::EncodeS(asn_DEF_ASN_NGAP_PathSwitchRequestTransfer, transfer);
+                    int size_tmp = transfer_s.length();
+
+                    uint8_t * data = transfer_s.data();
+                    item->pathSwitchRequestTransfer.buf = (uint8_t*)CALLOC(size_tmp,sizeof(uint8_t));  
+                    memcpy(item->pathSwitchRequestTransfer.buf,data,size_tmp * sizeof(uint8_t));
+
+                    item->pathSwitchRequestTransfer.size = size_tmp;
                 }
             }
+	    m_logger->info("startSendAssociated");
             
             // for (int psi : ue->pduSessions) {
             //     m_logger->debug("psi : %d,%lu",psi,(uint64_t)psi);
@@ -274,10 +351,15 @@ void NgapTask::onLoop()
             OCTET_STRING gnb_ip = {};
             gnb_ip.buf = (uint8_t *)CALLOC(4,1);
             gnb_ip.size = 4;
+	    std::string ip_string="";
             for (int i=0;i<gnb_ip.size;i++){
-                gnb_ip.buf[i] = m_base->sctpServer->target_ip[i];
-                m_logger->info("target_ip : %d",m_base->sctpServer->target_ip[i]);
-            }
+                gnb_ip.buf[i] = m_base->sctpServer->handover_ips[w.ueId][i];
+		ip_string+=std::to_string(gnb_ip.buf[i]);
+                if(i<3){
+                    ip_string+=".";
+                }
+                m_logger->info("target_ip : %d",m_base->sctpServer->handover_ips[w.ueId][i]);
+            }m_logger->info("target_ip_string : "+ip_string);
             auto *pdu = sendPathSwitchRequestwithTargetIp(w.ueId,gnb_ip);
             ssize_t encoded;
             uint8_t *buffer;
@@ -296,8 +378,8 @@ void NgapTask::onLoop()
             //char wholeEncode[1000] = {};
             // memcpy(wholeEncode,encodeStr,strlen(encodeStr));
             // memcpy(wholeEncode+strlen(encodeStr),buffer,encoded);
-            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
-            sendXnapMessage(buffer,encoded);
+	    sendXnapMessage(buffer,encoded,m_base->sctpTask->id_ip[ip_string]);
+            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr),m_base->sctpTask->id_ip[ip_string]);
 
             break;
         }
@@ -339,9 +421,9 @@ void NgapTask::onLoop()
             cJSON_AddNumberToObject(json, "upf_ip3", m_base->sctpServer->ul_ip[3]);
             auto encodeStr = cJSON_PrintUnformatted(json);
 
-            sendXnapMessage(buffer,encoded);
+            sendXnapMessage(buffer,encoded,10);
             utils::Sleep(2);
-            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr),10);
      
             break;
         }
@@ -367,7 +449,7 @@ void NgapTask::onLoop()
             //char wholeEncode[1000] = {};
             // memcpy(wholeEncode,encodeStr,strlen(encodeStr));
             // memcpy(wholeEncode+strlen(encodeStr),buffer,encoded);
-            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr));
+            sendXnapMessage((unsigned char*)encodeStr,strlen(encodeStr),10);
             break;
         }
         case NmGnbRrcToNgap::DO_BHO_PATHSWITCH:{

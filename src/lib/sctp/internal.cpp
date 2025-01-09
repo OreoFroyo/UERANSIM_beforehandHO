@@ -8,8 +8,10 @@
 
 #include "internal.hpp"
 #include "types.hpp"
+#include <utility>
 
 #include <cstring>
+#include <iostream>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -104,8 +106,7 @@ void SetEventOptions(int sd)
         ThrowError("SCTP SCTP_EVENTS option failed");
 }
 
-void StartListening(int sd)
-{
+void StartListening(int sd){
     if (listen(sd, 10))
         ThrowError("SCTP socket could not listen: ", errno);
 }
@@ -125,15 +126,44 @@ void Accept(int sd)
         ThrowError("SCTP accept failure: ", errno);
 }
 
-int MyAccept(int sd)
+std::pair<int, std::string> MyAccept(int sd)
 {
-    sockaddr saddr{};
-    socklen_t saddr_size{};
+    struct sockaddr_in6 saddr;
+    
 
-    int clientSd = accept(sd, &saddr, &saddr_size);
-    if (clientSd < 0)
+    memset(&saddr, 0, sizeof(saddr));
+    unsigned int saddr_size=sizeof(saddr);
+
+    int clientSd = accept(sd, (struct sockaddr*)&saddr, &saddr_size);
+    if (clientSd <= 0) {
+        // Assuming ThrowError is a function that throws an exception with the given message
         ThrowError("SCTP accept failure: ", errno);
-    return clientSd;
+    }
+   
+     char ipv4_str[INET_ADDRSTRLEN]; 
+    
+    if (IN6_IS_ADDR_V4MAPPED(&saddr.sin6_addr)) {
+        uint32_t ipv4_addr = saddr.sin6_addr.s6_addr32[3];
+        
+        inet_ntop(AF_INET, &ipv4_addr, ipv4_str, INET_ADDRSTRLEN);
+        printf("IPv4 address: %s\n", ipv4_str);
+    } else {
+        printf("Address is not an IPv4-mapped IPv6 address.\n");
+    }
+	
+// int clientip = saddr.sin_addr.s_addr;
+  // printf("Client ip : %d.%d.%d.%d\n",clientip&255,(clientip>>8)&255,
+   //         (clientip>>16)&255,(clientip>>24)&255);
+  // std::string ip="";
+
+  // for (int i=0;i<4;i++){
+    //   ip+=std::to_string((clientip>>(i*8))&255);
+    //   if(i<3){
+    //       ip+=".";
+    //   }
+ //  }
+
+    return {clientSd, std::string(ipv4_str)};
 }
 
 void Connect(int sd, const std::string &address, uint16_t port)
@@ -188,7 +218,9 @@ void ReceiveMessage(int sd, uint32_t ppid, ISctpHandler *handler)
     std::memset((void *)&info, 0, sizeof(sctp_sndrcvinfo));
 
     int r = sctp_recvmsg(sd, (void *)buffer, RECEIVE_BUFFER_SIZE, (sockaddr *)&addr, &fromLen, &info, &flags);
-
+    int clientip = addr.sin_addr.s_addr;
+    //printf("Client ip : %d.%d.%d.%d\n",clientip&255,(clientip>>8 (clientip>>16)&255,(clientip>>24)&255);
+     
     if (r < 0)
     {
         if (errno == ECONNRESET)
